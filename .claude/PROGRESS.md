@@ -10,10 +10,13 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Task 2 done. Task 3 not started.
-- **Next action:** waiting on user go-ahead to start Task 3 (model.rs, timefmt.rs, format.rs — sonnet)
-- **Branch:** `main` (2 commits so far: `17c3d0b`, `71bfe0c`; Task 2's commit pending)
-- **Waiting on user:** confirmation to proceed to Task 3
+- **Current task:** Task 3 done. Task 4 not started.
+- **Next action:** waiting on user go-ahead to start Task 4 (registry collector — haiku). Note: Tasks
+  4-8 can run in parallel once Task 3 is done (each adds its own `pub mod` line to
+  `src/collectors/mod.rs`), and Task 14 (icon) can run alongside 3-13 too.
+- **Branch:** `main` (4 commits: `17c3d0b`, `71bfe0c`, `f890b27`, `4a2870e`)
+- **Waiting on user:** confirmation to proceed to Task 4 (and whether to parallelize 4-8 now or run
+  them one at a time)
 - **Environment note:** Rust 1.98.1 installed via `winget install Rustlang.Rustup`. Cargo bin is
   `C:\Users\AaronBrataAditama\.cargo\bin`; `setx` added it to the user PATH for new sessions, but the
   *current* shell environment does not see it (harness shells don't source `.bash_profile` and don't
@@ -38,8 +41,8 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | # | Task | Implementer model | Status | Commit | Notes |
 |---|---|---|---|---|---|
 | 1 | Toolchain + scaffold | haiku | done | 17c3d0b, 71bfe0c | verified independently: tests pass, clippy clean, exe 208 KB |
-| 2 | Spike: waiting signal + usage shape | main session (scripts) + user (live checks) | done | (pending) | decision: proceed as specified, with adjustments for Tasks 5 and 7 |
-| 3 | Model, time, format | sonnet | todo | | |
+| 2 | Spike: waiting signal + usage shape | main session (scripts) + user (live checks) | done | f890b27 | decision: proceed as specified, with adjustments for Tasks 5 and 7 |
+| 3 | Model, time, format | sonnet | done | 4a2870e | verified independently: 20/20 tests pass, clippy clean; one deviation (`.is_multiple_of()` instead of `% 3 == 0`, clippy-forced, behavior identical) |
 | 4 | Registry collector | haiku | todo | | |
 | 5 | Transcript tail | haiku | todo | | |
 | 6 | Sub-agents | haiku | todo | | |
