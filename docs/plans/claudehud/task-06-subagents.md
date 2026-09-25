@@ -25,7 +25,7 @@ Observed files (this machine), per agent `<id>`:
 
 ---
 
-- [ ] **Step 1: Write failing unit tests**
+- [x] **Step 1: Write failing unit tests**
 
 `src/collectors/subagents.rs`, tests only:
 
@@ -97,12 +97,12 @@ mod tests {
 
 Add `pub mod subagents;` to `src/collectors/mod.rs`.
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `cargo test --lib collectors::subagents`
 Expected: compile errors.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Above the tests:
 
@@ -264,12 +264,12 @@ pub fn list_subagents(session_dir: &Path, now_ms: i64) -> Vec<Subagent> {
 }
 ```
 
-- [ ] **Step 4: Run unit tests**
+- [x] **Step 4: Run unit tests**
 
 Run: `cargo test --lib collectors::subagents`
 Expected: 5 passed.
 
-- [ ] **Step 5: Integration test with real files**
+- [x] **Step 5: Integration test with real files**
 
 `tests/subagents_io.rs`:
 
@@ -323,12 +323,12 @@ fn missing_folder_means_no_agents() {
 }
 ```
 
-- [ ] **Step 6: Run it**
+- [x] **Step 6: Run it**
 
 Run: `cargo test --test subagents_io`
 Expected: 2 passed.
 
-- [ ] **Step 7: Lint and commit**
+- [x] **Step 7: Lint and commit**
 
 ```powershell
 cargo clippy --all-targets -- -D warnings
