@@ -4,6 +4,7 @@
 pub mod credentials;
 pub mod registry;
 pub mod status;
+pub mod subagents;
 pub mod tail;
 pub mod transcript;
 pub mod usage;
