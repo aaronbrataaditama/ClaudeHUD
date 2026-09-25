@@ -28,7 +28,7 @@ Component `status` values: `operational`, `degraded_performance`, `partial_outag
 
 ---
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 `src/collectors/status.rs`, tests only:
 
@@ -82,12 +82,12 @@ mod tests {
 
 Add `pub mod status;` to `src/collectors/mod.rs`.
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `cargo test --lib collectors::status`
 Expected: compile errors.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Above the tests:
 
@@ -134,12 +134,12 @@ pub fn parse_status(text: &str, now_ms: i64) -> Result<ServiceStatus, String> {
 }
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `cargo test --lib collectors::status`
 Expected: 5 passed.
 
-- [ ] **Step 5: Lint and commit**
+- [x] **Step 5: Lint and commit**
 
 ```powershell
 cargo clippy --all-targets -- -D warnings
