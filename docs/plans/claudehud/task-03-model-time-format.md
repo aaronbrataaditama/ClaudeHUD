@@ -19,7 +19,7 @@
 
 ## Part A: `timefmt`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/timefmt.rs` with only the tests first:
 
@@ -76,12 +76,12 @@ mod tests {
 
 Add to `src/lib.rs`: `pub mod timefmt;`
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `cargo test --lib timefmt::`
 Expected: compile errors `cannot find function days_from_civil` (and the others).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Put this above the `#[cfg(test)]` block in `src/timefmt.rs`:
 
@@ -200,7 +200,7 @@ pub fn now_ms() -> i64 {
 }
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `cargo test --lib timefmt::`
 Expected: 5 passed.
@@ -209,7 +209,7 @@ Expected: 5 passed.
 
 ## Part B: `model`
 
-- [ ] **Step 5: Write the failing tests**
+- [x] **Step 5: Write the failing tests**
 
 Create `src/model.rs` containing only:
 
@@ -296,12 +296,12 @@ mod tests {
 
 Add to `src/lib.rs`: `pub mod model;`
 
-- [ ] **Step 6: Run to verify it fails**
+- [x] **Step 6: Run to verify it fails**
 
 Run: `cargo test --lib model::`
 Expected: compile errors (types not defined).
 
-- [ ] **Step 7: Implement**
+- [x] **Step 7: Implement**
 
 Put above the tests in `src/model.rs`:
 
@@ -642,7 +642,7 @@ impl Light {
 }
 ```
 
-- [ ] **Step 8: Run tests**
+- [x] **Step 8: Run tests**
 
 Run: `cargo test --lib model::`
 Expected: 7 passed.
@@ -651,7 +651,7 @@ Expected: 7 passed.
 
 ## Part C: `format`
 
-- [ ] **Step 9: Write the failing tests**
+- [x] **Step 9: Write the failing tests**
 
 Create `src/format.rs` with only:
 
@@ -761,12 +761,12 @@ mod tests {
 
 Add to `src/lib.rs`: `pub mod format;`
 
-- [ ] **Step 10: Run to verify it fails**
+- [x] **Step 10: Run to verify it fails**
 
 Run: `cargo test --lib format::`
 Expected: compile errors (functions missing).
 
-- [ ] **Step 11: Implement**
+- [x] **Step 11: Implement**
 
 Above the tests in `src/format.rs`:
 
@@ -993,12 +993,12 @@ pub fn folder_name(path: &str) -> String {
 }
 ```
 
-- [ ] **Step 12: Run all tests, clippy, fmt**
+- [x] **Step 12: Run all tests, clippy, fmt**
 
 Run: `cargo test --lib` then `cargo clippy --all-targets -- -D warnings` then `cargo fmt`
 Expected: all timefmt/model/format tests pass; no clippy warnings.
 
-- [ ] **Step 13: Commit**
+- [x] **Step 13: Commit**
 
 ```powershell
 git add src/lib.rs src/model.rs src/timefmt.rs src/format.rs
