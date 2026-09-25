@@ -40,7 +40,7 @@ Known shapes:
 
 ---
 
-- [ ] **Step 1: Write failing tests for credentials**
+- [x] **Step 1: Write failing tests for credentials**
 
 `src/collectors/credentials.rs`, tests only:
 
@@ -99,7 +99,7 @@ mod tests {
 }
 ```
 
-- [ ] **Step 2: Implement credentials**
+- [x] **Step 2: Implement credentials**
 
 Above its tests:
 
@@ -208,12 +208,12 @@ pub fn plan_label(subscription: Option<&str>, tier: Option<&str>) -> Option<Stri
 
 Add `pub mod credentials;` to `src/collectors/mod.rs`.
 
-- [ ] **Step 3: Run credentials tests**
+- [x] **Step 3: Run credentials tests**
 
 Run: `cargo test --lib collectors::credentials`
 Expected: 5 passed.
 
-- [ ] **Step 4: Write failing tests for usage**
+- [x] **Step 4: Write failing tests for usage**
 
 `src/collectors/usage.rs`, tests only:
 
@@ -282,7 +282,7 @@ mod tests {
 }
 ```
 
-- [ ] **Step 5: Implement usage**
+- [x] **Step 5: Implement usage**
 
 Above its tests:
 
@@ -368,12 +368,12 @@ fn parse_spend(obj: &Map<String, Value>) -> Option<Spend> {
 
 Add `pub mod usage;` to `src/collectors/mod.rs`.
 
-- [ ] **Step 6: Run usage tests**
+- [x] **Step 6: Run usage tests**
 
 Run: `cargo test --lib collectors::usage`
 Expected: 6 passed.
 
-- [ ] **Step 7: Guard against the real response shape**
+- [x] **Step 7: Guard against the real response shape**
 
 `tests/usage_fixtures.rs` parses every file saved by the Task 2 spike:
 
@@ -399,7 +399,7 @@ fn every_saved_live_response_parses() {
 Run: `cargo test --test usage_fixtures`
 Expected: 1 passed. If a saved live response fails, the parser is wrong for the real shape: fix the parser (add a unit test for that shape first), not the fixture.
 
-- [ ] **Step 8: Lint and commit**
+- [x] **Step 8: Lint and commit**
 
 ```powershell
 cargo clippy --all-targets -- -D warnings
