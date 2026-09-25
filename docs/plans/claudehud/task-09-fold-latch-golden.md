@@ -33,7 +33,7 @@ No rule looks at elapsed time.
 
 ## Part A: `fold()` and ordering
 
-- [ ] **Step 1: Write failing unit tests**
+- [x] **Step 1: Write failing unit tests**
 
 `src/state.rs`, tests only:
 
@@ -82,12 +82,12 @@ mod tests {
 }
 ```
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Add `pub mod state;` to `src/lib.rs`. Run: `cargo test --lib state::`
 Expected: compile errors.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Above the tests in `src/state.rs`:
 
@@ -213,14 +213,14 @@ pub fn fold(s: &Snapshot, previous: Option<&Light>) -> Light {
 }
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `cargo test --lib state::`
 Expected: 4 passed.
 
 ## Part B: crash latch
 
-- [ ] **Step 5: Write failing tests**
+- [x] **Step 5: Write failing tests**
 
 `src/latch.rs`, tests only:
 
@@ -298,7 +298,7 @@ mod tests {
 
 Add `pub mod latch;` to `src/lib.rs`.
 
-- [ ] **Step 6: Implement**
+- [x] **Step 6: Implement**
 
 Above the tests in `src/latch.rs`:
 
@@ -354,14 +354,14 @@ impl CrashLatch {
 }
 ```
 
-- [ ] **Step 7: Run tests**
+- [x] **Step 7: Run tests**
 
 Run: `cargo test --lib latch::`
 Expected: 5 passed.
 
 ## Part C: fixture loader and golden files
 
-- [ ] **Step 8: Fixture loader**
+- [x] **Step 8: Fixture loader**
 
 `src/fixture.rs`:
 
@@ -455,7 +455,7 @@ mod tests {
 
 Add `pub mod fixture;` to `src/lib.rs`.
 
-- [ ] **Step 9: Create the golden files**
+- [x] **Step 9: Create the golden files**
 
 Create each file below under `fixtures/snapshots/` with exactly this content. `expect.detail` (optional) is the session name, limit label or component the reason names.
 
@@ -597,7 +597,7 @@ Create each file below under `fixtures/snapshots/` with exactly this content. `e
  "expect":{"colour":"red","dim":false,"reason":"quota_spent","detail":"Weekly · all models"}}
 ```
 
-- [ ] **Step 10: Golden test runner**
+- [x] **Step 10: Golden test runner**
 
 `tests/golden.rs`:
 
@@ -657,12 +657,12 @@ fn golden_snapshots() {
 }
 ```
 
-- [ ] **Step 11: Run all tests**
+- [x] **Step 11: Run all tests**
 
 Run: `cargo test`
 Expected: every test passes, including `golden_snapshots`. If a golden file fails, re-read §1: fix `fold()` if it disagrees with the spec, never the expectation.
 
-- [ ] **Step 12: Lint and commit**
+- [x] **Step 12: Lint and commit**
 
 ```powershell
 cargo clippy --all-targets -- -D warnings

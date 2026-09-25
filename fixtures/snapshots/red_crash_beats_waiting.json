@@ -1,0 +1,2 @@
+{"snapshot":{"now_ms":1790330000000,"sessions":[{"name":"p","session_id":"p","status":"waiting"}],"crashed":[{"key":"1:1","name":"gone","cwd":"C:\\w"}]},
+ "expect":{"colour":"red","dim":false,"reason":"crashed","detail":"gone"}}

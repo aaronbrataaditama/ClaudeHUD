@@ -1,0 +1,3 @@
+{"snapshot":{"now_ms":1790330000000,"warn_percent":90,"sessions":[{"name":"a","session_id":"a","status":"busy"}],
+   "usage":{"value":{"limits":[{"key":"seven_day","label":"Weekly · all models","pct":88}]}}},
+ "expect":{"colour":"green","dim":false,"reason":"working","detail":"a"}}

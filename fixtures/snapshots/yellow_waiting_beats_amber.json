@@ -1,0 +1,3 @@
+{"snapshot":{"now_ms":1790330000000,"sessions":[{"name":"docs","session_id":"d","status":"busy","status_updated_at_ms":1790329999000},{"name":"portal-service","session_id":"p","status":"waiting","waiting_for":"approve the permission prompt","status_updated_at_ms":1790329000000}],
+   "usage":{"value":{"limits":[{"key":"seven_day","label":"Weekly · all models","pct":92}]}}},
+ "expect":{"colour":"yellow","dim":false,"reason":"waiting","detail":"portal-service"}}

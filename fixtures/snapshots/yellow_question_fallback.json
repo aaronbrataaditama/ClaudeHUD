@@ -1,0 +1,2 @@
+{"snapshot":{"now_ms":1790330000000,"sessions":[{"name":"old-cc","session_id":"o","status":"busy","transcript":{"pending_user_tool":"AskUserQuestion"}}]},
+ "expect":{"colour":"yellow","dim":false,"reason":"waiting","detail":"old-cc"}}

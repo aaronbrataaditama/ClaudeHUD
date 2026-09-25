@@ -1,0 +1,3 @@
+{"snapshot":{"now_ms":1790330000000,"sessions":[{"name":"p","session_id":"p","status":"waiting","waiting_for":"approve plan"}],
+   "usage":{"value":{"limits":[{"key":"seven_day","label":"Weekly · all models","pct":100}]}}},
+ "expect":{"colour":"red","dim":false,"reason":"quota_spent","detail":"Weekly · all models"}}

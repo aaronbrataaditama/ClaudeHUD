@@ -1,0 +1,3 @@
+{"snapshot":{"now_ms":1790330000000,"plan":"Enterprise","sessions":[{"name":"billing-api","session_id":"b","status":"busy"}],
+   "usage":{"value":{"limits":[],"spend":{"used_minor":54600,"limit_minor":60000,"currency":"USD","enabled":true}}}},
+ "expect":{"colour":"amber","dim":false,"reason":"spend_warn"}}

@@ -1,0 +1,2 @@
+{"snapshot":{"now_ms":1790330000000,"sessions":[{"name":"flaky","session_id":"f","status":"busy","transcript":{"api_error_exhausted":true}}]},
+ "expect":{"colour":"red","dim":false,"reason":"api_error","detail":"flaky"}}

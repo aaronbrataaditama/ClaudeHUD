@@ -1,0 +1,3 @@
+{"snapshot":{"now_ms":1790330000000,"sessions":[{"name":"a","session_id":"a","status":"busy"}],
+   "status":{"value":{"description":"Partial outage","components":[{"name":"Claude Code","state":"operational"},{"name":"Claude API (api.anthropic.com)","state":"partial_outage"},{"name":"claude.ai","state":"operational"}]}}},
+ "expect":{"colour":"red","dim":false,"reason":"incident","detail":"Claude API (api.anthropic.com)"}}

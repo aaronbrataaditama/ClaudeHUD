@@ -1,0 +1,3 @@
+{"snapshot":{"now_ms":1790330000000,"sessions":[{"name":"a","session_id":"a","status":"idle"}],
+   "usage":{"value":{"limits":[{"key":"five_hour","label":"Current session · 5h","pct":100,"resets_at":1790346720},{"key":"seven_day","label":"Weekly · all models","pct":100,"resets_at":1790586000}]}}},
+ "expect":{"colour":"red","dim":false,"reason":"quota_spent","detail":"Weekly · all models"}}

@@ -1,0 +1,2 @@
+{"snapshot":{"now_ms":1790330000000,"sessions":[],"usage":{"value":{"limits":[{"key":"seven_day","label":"Weekly · all models","pct":100}]}}},
+ "expect":{"colour":"off","dim":false,"reason":"no_sessions"}}

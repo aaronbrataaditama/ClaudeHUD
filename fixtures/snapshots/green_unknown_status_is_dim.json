@@ -1,0 +1,2 @@
+{"snapshot":{"now_ms":1790330000000,"sessions":[{"name":"mystery","session_id":"m","status":"unknown"}]},
+ "expect":{"colour":"green","dim":true,"reason":"all_idle"}}
