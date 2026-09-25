@@ -1,0 +1,15 @@
+/target/
+**/*.rs.bk
+*.pdb
+
+# runtime files ClaudeHUD writes beside the exe
+claudehud.settings.json
+claudehud.log
+claudehud.log.1
+
+# local Claude Code overrides
+.claude/settings.local.json
+
+# never commit real Claude Code data
+fixtures/**/*.key
+.credentials.json

@@ -1,0 +1,859 @@
+# Task 19: Tray menu, settings, system events, autostart, first run
+
+**Goal:** Finish the app. Add the full native tray menu (Show/Hide panel, Edge, Monitor, Warn at, Run on startup, Open status page, Exit) with settings saved on change. React to monitor, DPI, work-area and taskbar changes, to sleep/resume and to lock/unlock, and hide during fullscreen apps. Keep autostart pointing at the current exe path, make menus dark, and show a first-run balloon. If the panel renderer fails, say so in a balloon.
+
+**Spec:** §5 (menu items and order, dark menus), §6 (settings, autostart), §2.4 (DPI, monitors, fullscreen, power, lock), §7 (WARP fallback message). **Two deliberate deviations,** also recorded in the spec by this task's Step 4:
+- **First run** shows a tray balloon ("hover the light … right-click this icon for settings") instead of opening the panel pinned. The balloon needs no extra layout, and it points at the tray, which is where the settings live.
+- **Crash acknowledgement** happens when the panel that showed the crash closes (Task 11), not when it opens.
+
+**Files:**
+- Create: `src/platform/menu.rs`
+- Replace: `src/platform/app.rs` (final version below)
+- Modify: `src/platform/mod.rs` (add `pub mod menu;`), `PLAN-CLAUDEHUD.md` (Step 4)
+
+**Interfaces:**
+- Consumes: `settings::{save, Edge}`, `system::{sync_autostart, allow_dark_menus, fullscreen_active, open_url}`, `Tray::notify`, Task 18's app.
+- Produces: `platform::menu::{popup(owner: HWND, st: &MenuState) -> u32, MenuState, CMD_*}`. That is the whole deliverable: a finished app.
+
+---
+
+- [ ] **Step 1: Menu**
+
+`src/platform/menu.rs`:
+
+```rust
+//! The native tray context menu (§5). Returns the chosen command id (0 = dismissed).
+
+use super::wide::wide;
+use crate::geometry::MonitorInfo;
+use crate::settings::{Edge, Settings};
+use windows::core::PCWSTR;
+use windows::Win32::Foundation::{HWND, LPARAM, POINT, WPARAM};
+use windows::Win32::UI::WindowsAndMessaging::{
+    AppendMenuW, CheckMenuRadioItem, CreatePopupMenu, DestroyMenu, GetCursorPos, PostMessageW, SetForegroundWindow,
+    SetMenuDefaultItem, TrackPopupMenu, HMENU, MENU_ITEM_FLAGS, MF_BYCOMMAND, MF_CHECKED, MF_POPUP, MF_SEPARATOR,
+    MF_STRING, MF_UNCHECKED, TPM_NONOTIFY, TPM_RETURNCMD, TPM_RIGHTBUTTON, WM_NULL,
+};
+
+pub const CMD_TOGGLE: u32 = 100;
+pub const CMD_EDGE_TOP: u32 = 110;
+pub const CMD_EDGE_LEFT: u32 = 111;
+pub const CMD_MONITOR_PRIMARY: u32 = 120;
+/// 121..=129: one per monitor in enumeration order
+pub const CMD_MONITOR_FIRST: u32 = 121;
+pub const MAX_MONITORS: usize = 9;
+pub const CMD_WARN_80: u32 = 130;
+pub const CMD_WARN_85: u32 = 131;
+pub const CMD_WARN_90: u32 = 132;
+pub const CMD_AUTOSTART: u32 = 140;
+pub const CMD_STATUS_PAGE: u32 = 150;
+pub const CMD_EXIT: u32 = 199;
+
+pub struct MenuState<'a> {
+    pub panel_visible: bool,
+    pub settings: &'a Settings,
+    pub monitors: &'a [MonitorInfo],
+}
+
+unsafe fn item(menu: HMENU, flags: MENU_ITEM_FLAGS, id: u32, text: &str) {
+    let t = wide(text);
+    let _ = AppendMenuW(menu, flags, id as usize, PCWSTR(t.as_ptr()));
+}
+
+unsafe fn submenu(menu: HMENU, sub: HMENU, text: &str) {
+    let t = wide(text);
+    let _ = AppendMenuW(menu, MF_POPUP, sub.0 as usize, PCWSTR(t.as_ptr()));
+}
+
+pub fn popup(owner: HWND, st: &MenuState) -> u32 {
+    unsafe {
+        let Ok(menu) = CreatePopupMenu() else { return 0 };
+        item(menu, MF_STRING, CMD_TOGGLE, if st.panel_visible { "Hide panel" } else { "Show panel" });
+        let _ = SetMenuDefaultItem(menu, CMD_TOGGLE, 0);
+        item(menu, MF_SEPARATOR, 0, "");
+
+        if let Ok(edge) = CreatePopupMenu() {
+            item(edge, MF_STRING, CMD_EDGE_TOP, "Top");
+            item(edge, MF_STRING, CMD_EDGE_LEFT, "Left");
+            let sel = if st.settings.edge == Edge::Top { CMD_EDGE_TOP } else { CMD_EDGE_LEFT };
+            let _ = CheckMenuRadioItem(edge, CMD_EDGE_TOP, CMD_EDGE_LEFT, sel, MF_BYCOMMAND.0);
+            submenu(menu, edge, "Edge");
+        }
+
+        if let Ok(mons) = CreatePopupMenu() {
+            item(mons, MF_STRING, CMD_MONITOR_PRIMARY, "Primary display");
+            let shown = st.monitors.iter().take(MAX_MONITORS).enumerate();
+            let mut sel = CMD_MONITOR_PRIMARY;
+            let mut last = CMD_MONITOR_PRIMARY;
+            for (i, m) in shown {
+                let id = CMD_MONITOR_FIRST + i as u32;
+                item(mons, MF_STRING, id, &m.name);
+                if st.settings.monitor == m.id {
+                    sel = id;
+                }
+                last = id;
+            }
+            let _ = CheckMenuRadioItem(mons, CMD_MONITOR_PRIMARY, last, sel, MF_BYCOMMAND.0);
+            submenu(menu, mons, "Monitor");
+        }
+
+        if let Ok(warn) = CreatePopupMenu() {
+            item(warn, MF_STRING, CMD_WARN_80, "80%");
+            item(warn, MF_STRING, CMD_WARN_85, "85%");
+            item(warn, MF_STRING, CMD_WARN_90, "90%");
+            let sel = match st.settings.warn_percent {
+                80 => Some(CMD_WARN_80),
+                85 => Some(CMD_WARN_85),
+                90 => Some(CMD_WARN_90),
+                _ => None,
+            };
+            if let Some(sel) = sel {
+                let _ = CheckMenuRadioItem(warn, CMD_WARN_80, CMD_WARN_90, sel, MF_BYCOMMAND.0);
+            }
+            // Text after a tab is drawn right-aligned by Windows.
+            submenu(menu, warn, &format!("Warn at\t{}%", st.settings.warn_percent));
+        }
+
+        item(menu, MF_SEPARATOR, 0, "");
+        let check = if st.settings.autostart { MF_CHECKED } else { MF_UNCHECKED };
+        item(menu, MF_STRING | check, CMD_AUTOSTART, "Run on startup");
+        item(menu, MF_STRING, CMD_STATUS_PAGE, "Open status page\t↗");
+        item(menu, MF_SEPARATOR, 0, "");
+        item(menu, MF_STRING, CMD_EXIT, "Exit");
+
+        let mut pt = POINT::default();
+        let _ = GetCursorPos(&mut pt);
+        // Required so the menu closes when the user clicks elsewhere (documented tray quirk).
+        let _ = SetForegroundWindow(owner);
+        let cmd = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_RIGHTBUTTON | TPM_NONOTIFY, pt.x, pt.y, Some(0), owner, None);
+        let _ = PostMessageW(Some(owner), WM_NULL, WPARAM(0), LPARAM(0));
+        let _ = DestroyMenu(menu); // destroys the submenus too
+        cmd.0 as u32
+    }
+}
+```
+
+Add `pub mod menu;` to `src/platform/mod.rs`.
+
+- [ ] **Step 2: Replace `src/platform/app.rs` (final)**
+
+New compared with Task 18:
+- fields `settings_path`, `locked`, `fullscreen`
+- `menu::popup` and `on_command` for every item, with a settings save
+- `reposition()`, called on display, work-area and DPI changes
+- resume, lock and unlock handling (with `WTSRegisterSessionNotification`)
+- a fullscreen check on every tick
+- `sync_autostart` and `allow_dark_menus` at startup
+- the first-run and renderer-failure balloons
+
+```rust
+//! Message loop and wiring. Final version (Task 19).
+
+use super::layered;
+use super::localtime::local_parts;
+use super::menu::{self, MenuState};
+use super::monitors;
+use super::process::WinProbe;
+use super::render::Renderer;
+use super::system;
+use super::tray::{Tray, WM_TRAY};
+use super::win;
+use super::worker::{Worker, WorkerMsg, WM_WORKER};
+use crate::collect::Collector;
+use crate::geometry::{self, MonitorInfo, Rect};
+use crate::hover::{Action, Event, Hover};
+use crate::icon::{self, Badge};
+use crate::model::{Colour, Light, Snapshot, DIM_ALPHA};
+use crate::panel::layout::{is_expanded, layout, Ctx, Hit, Layout, ViewState};
+use crate::settings::{self, Edge, Settings};
+use crate::{fixture, log, state, timefmt, tooltip};
+use std::cell::RefCell;
+use std::path::PathBuf;
+use std::time::Instant;
+use windows::core::w;
+use windows::Win32::Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, WPARAM};
+use windows::Win32::System::Com::{CoInitializeEx, COINIT_APARTMENTTHREADED};
+use windows::Win32::System::LibraryLoader::GetModuleHandleW;
+use windows::Win32::System::RemoteDesktop::{WTSRegisterSessionNotification, NOTIFY_FOR_THIS_SESSION};
+use windows::Win32::UI::Input::KeyboardAndMouse::{TrackMouseEvent, TME_HOVER, TME_LEAVE, TRACKMOUSEEVENT, TRACKMOUSEEVENT_FLAGS};
+use windows::Win32::UI::WindowsAndMessaging::{
+    DefWindowProcW, DestroyWindow, DispatchMessageW, GetMessageW, KillTimer, PostQuitMessage, RegisterWindowMessageW,
+    SetTimer, TranslateMessage, MA_NOACTIVATE, MSG, WM_DESTROY, WM_DISPLAYCHANGE, WM_DPICHANGED, WM_LBUTTONUP,
+    WM_MOUSEACTIVATE, WM_MOUSEHOVER, WM_MOUSELEAVE, WM_MOUSEMOVE, WM_MOUSEWHEEL, WM_POWERBROADCAST, WM_RBUTTONUP,
+    WM_SETTINGCHANGE, WM_TIMER, WM_WTSSESSION_CHANGE,
+};
+
+const TIMER_TICK: usize = 1;
+const TIMER_CLOSE: usize = 2;
+const TIMER_ANIM: usize = 3;
+const OPEN_MS: f32 = 180.0;
+const CLOSE_MS: f32 = 140.0;
+const HOVER_MS: u32 = 250;
+const CLOSE_DELAY_MS: u32 = 300;
+const STALE_USAGE_MS: i64 = 60_000;
+const WHEEL_STEP: f32 = 44.0;
+// Literal values keep us independent of where the windows crate files these constants.
+const SPI_SETWORKAREA: usize = 0x002F;
+const PBT_APMRESUMESUSPEND: usize = 0x0007;
+const PBT_APMRESUMEAUTOMATIC: usize = 0x0012;
+const WTS_SESSION_LOCK: usize = 0x7;
+const WTS_SESSION_UNLOCK: usize = 0x8;
+const STATUS_URL: &str = "https://status.claude.com";
+
+thread_local! {
+    static APP: RefCell<Option<App>> = const { RefCell::new(None) };
+}
+
+fn with_app<R>(f: impl FnOnce(&mut App) -> R) -> Option<R> {
+    APP.with(|cell| match cell.try_borrow_mut() {
+        Ok(mut guard) => guard.as_mut().map(f),
+        Err(_) => None,
+    })
+}
+
+#[derive(Clone, Copy)]
+struct Anim {
+    start: Instant,
+    opening: bool,
+}
+
+struct App {
+    controller: HWND,
+    strip: HWND,
+    panel: HWND,
+    tray: Tray,
+    taskbar_created: u32,
+    settings: Settings,
+    settings_path: PathBuf,
+    monitors: Vec<MonitorInfo>,
+    fixture: Option<PathBuf>,
+    collector: Collector,
+    probe: WinProbe,
+    worker: Option<Worker>,
+    snapshot: Snapshot,
+    light: Light,
+    shown_strip: Option<(Rect, Colour, bool)>,
+    renderer: Option<Renderer>,
+    renderer_error: Option<String>,
+    hover: Hover,
+    view: ViewState,
+    layout: Option<Layout>,
+    panel_rect: Rect,
+    panel_scale: f32,
+    anim: Option<Anim>,
+    strip_tracking: bool,
+    panel_tracking: bool,
+    locked: bool,
+    fullscreen: bool,
+}
+
+fn track(hwnd: HWND, flags: TRACKMOUSEEVENT_FLAGS, hover_ms: u32) {
+    let mut t = TRACKMOUSEEVENT {
+        cbSize: std::mem::size_of::<TRACKMOUSEEVENT>() as u32,
+        dwFlags: flags,
+        hwndTrack: hwnd,
+        dwHoverTime: hover_ms,
+    };
+    unsafe {
+        let _ = TrackMouseEvent(&mut t);
+    }
+}
+
+fn lparam_xy(lp: LPARAM) -> (i32, i32) {
+    ((lp.0 & 0xFFFF) as u16 as i16 as i32, ((lp.0 >> 16) & 0xFFFF) as u16 as i16 as i32)
+}
+
+pub fn run() {
+    let Some(_instance) = system::single_instance() else { return };
+    unsafe {
+        let _ = CoInitializeEx(None, COINIT_APARTMENTTHREADED);
+    }
+    system::allow_dark_menus();
+    let settings_path = settings::settings_path(&system::exe_dir(), system::appdata_dir().as_deref());
+    log::init(settings_path.with_file_name("claudehud.log"));
+    let settings = settings::load(&settings_path);
+    if let Ok(exe) = std::env::current_exe() {
+        system::sync_autostart(settings.autostart, &exe); // re-points the Run key if the exe moved
+    }
+    let hinst: HINSTANCE = match unsafe { GetModuleHandleW(None) } {
+        Ok(m) => m.into(),
+        Err(e) => {
+            log::warn(&format!("GetModuleHandleW: {e}"));
+            return;
+        }
+    };
+    if !win::register_class(hinst, w!("ClaudeHUDController"), Some(controller_proc))
+        || !win::register_class(hinst, w!("ClaudeHUDStrip"), Some(strip_proc))
+        || !win::register_class(hinst, w!("ClaudeHUDPanel"), Some(panel_proc))
+    {
+        log::warn("RegisterClassExW failed");
+        return;
+    }
+    let (Ok(controller), Ok(strip), Ok(panel)) = (
+        win::create_controller(hinst, w!("ClaudeHUDController")),
+        win::create_layered(hinst, w!("ClaudeHUDStrip")),
+        win::create_layered(hinst, w!("ClaudeHUDPanel")),
+    ) else {
+        log::warn("CreateWindowExW failed");
+        return;
+    };
+    unsafe {
+        let _ = WTSRegisterSessionNotification(controller, NOTIFY_FOR_THIS_SESSION);
+    }
+    let (renderer, renderer_error) = match Renderer::new(hinst) {
+        Ok(r) => (Some(r), None),
+        Err(e) => {
+            log::warn(&format!("panel disabled: {e}"));
+            (None, Some(e))
+        }
+    };
+    let fixture = std::env::var_os("CLAUDEHUD_FIXTURE").map(PathBuf::from);
+    let claude_dir = system::claude_dir();
+    let worker = fixture.is_none().then(|| {
+        Worker::spawn(controller, claude_dir.clone(), settings.usage_poll_s as u64, settings.status_poll_s as u64)
+    });
+    let app = App {
+        controller,
+        strip,
+        panel,
+        tray: Tray::new(controller),
+        taskbar_created: unsafe { RegisterWindowMessageW(w!("TaskbarCreated")) },
+        settings,
+        settings_path,
+        monitors: monitors::enumerate(),
+        fixture,
+        collector: Collector::new(claude_dir),
+        probe: WinProbe::new(),
+        worker,
+        snapshot: Snapshot::default(),
+        light: Light::off(),
+        shown_strip: None,
+        renderer,
+        renderer_error,
+        hover: Hover::default(),
+        view: ViewState::default(),
+        layout: None,
+        panel_rect: Rect::default(),
+        panel_scale: 1.0,
+        anim: None,
+        strip_tracking: false,
+        panel_tracking: false,
+        locked: false,
+        fullscreen: false,
+    };
+    APP.with(|cell| *cell.borrow_mut() = Some(app));
+    with_app(|a| {
+        a.tick();
+        a.startup_notices();
+    });
+    unsafe {
+        SetTimer(Some(controller), TIMER_TICK, 1000, None);
+        let mut msg = MSG::default();
+        while GetMessageW(&mut msg, None, 0, 0).as_bool() {
+            let _ = TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+    }
+    with_app(|a| a.tray.remove());
+}
+
+impl App {
+    // ------------------------------------------------------------ lifecycle
+
+    fn startup_notices(&mut self) {
+        if let Some(e) = self.renderer_error.take() {
+            self.tray.notify("ClaudeHUD panel unavailable", &format!("The light and this icon still work. {e}"));
+        } else if !self.settings.first_run_done {
+            self.tray.notify(
+                "ClaudeHUD is running",
+                "Hover the light at the edge of your screen for details. Right-click this icon for settings.",
+            );
+            self.settings.first_run_done = true;
+            self.save_settings();
+        }
+    }
+
+    fn save_settings(&self) {
+        if let Err(e) = settings::save(&self.settings_path, &self.settings) {
+            log::warn(&format!("could not save settings: {e}"));
+        }
+    }
+
+    fn wake(&mut self) {
+        self.reposition();
+        if let Some(w) = &self.worker {
+            w.refresh();
+        }
+        self.tick();
+    }
+
+    fn reposition(&mut self) {
+        self.monitors = monitors::enumerate();
+        self.shown_strip = None;
+        self.update_strip();
+        if self.hover.visible {
+            self.render_panel();
+        }
+    }
+
+    // ------------------------------------------------------------ data
+
+    fn tick(&mut self) {
+        let fs = system::fullscreen_active();
+        if fs != self.fullscreen {
+            self.fullscreen = fs;
+            self.shown_strip = None;
+            if fs {
+                self.dispatch(Event::Suppress);
+            }
+        }
+        if self.fixture.is_none() {
+            self.collector.tick(timefmt::now_ms(), &self.probe, self.hover.visible);
+        }
+        self.refresh();
+    }
+
+    fn drain_worker(&mut self) {
+        let now = timefmt::now_ms();
+        if let Some(w) = &self.worker {
+            while let Ok(m) = w.results.try_recv() {
+                match m {
+                    WorkerMsg::Usage(o) => self.collector.apply_usage(o, now),
+                    WorkerMsg::Status(r) => self.collector.apply_status(r),
+                }
+            }
+        }
+    }
+
+    fn refresh(&mut self) {
+        let now = timefmt::now_ms();
+        self.snapshot = match &self.fixture {
+            Some(p) => match fixture::load_snapshot(p) {
+                Ok(mut s) => {
+                    fixture::anchor(&mut s, now);
+                    s
+                }
+                Err(e) => {
+                    log::warn(&e);
+                    Snapshot { now_ms: now, ..Snapshot::default() }
+                }
+            },
+            None => self.collector.snapshot(now, self.settings.warn_percent),
+        };
+        self.light = state::fold(&self.snapshot, Some(&self.light));
+        self.update_strip();
+        self.update_tray();
+        if self.hover.visible {
+            self.render_panel();
+        }
+    }
+
+    fn monitor(&self) -> Option<MonitorInfo> {
+        geometry::pick_monitor(&self.monitors, &self.settings.monitor).cloned()
+    }
+
+    fn update_strip(&mut self) {
+        let Some(m) = self.monitor() else { return };
+        self.hover.reveal_suppressed = geometry::edge_borders_other_monitor(&m, &self.monitors, self.settings.edge);
+        if self.light.colour == Colour::Off || self.locked || self.fullscreen {
+            if self.shown_strip.take().is_some() || self.fullscreen || self.locked {
+                win::hide(self.strip);
+            }
+            return;
+        }
+        let r = geometry::strip_rect(&m, self.settings.edge);
+        let key = (r, self.light.colour, self.light.dim);
+        if self.shown_strip == Some(key) {
+            win::set_topmost(self.strip);
+            return;
+        }
+        let alpha = if self.light.dim { DIM_ALPHA } else { 1.0 };
+        let px = icon::render_strip(r.w as u32, r.h as u32, self.light.colour.rgb(), alpha);
+        if layered::present(self.strip, r, &px, 255) {
+            win::show_noactivate(self.strip);
+            self.shown_strip = Some(key);
+        }
+    }
+
+    fn update_tray(&mut self) {
+        let size = win::small_icon_size();
+        let off = self.light.colour == Colour::Off;
+        let alpha = if self.light.dim { DIM_ALPHA } else { 1.0 };
+        let badge = (!off).then_some(Badge { rgb: self.light.colour.rgb(), alpha });
+        let px = icon::render_tray_icon(size, badge, off);
+        let tip = tooltip::tooltip(&self.light, &self.snapshot, &local_parts);
+        self.tray.update(size, &px, &tip);
+    }
+
+    // ------------------------------------------------------------ panel
+
+    fn frame(&self) -> (i32, i32, u8, bool) {
+        let r = self.panel_rect;
+        let Some(a) = self.anim else { return (r.x, r.y, 255, true) };
+        let dur = if a.opening { OPEN_MS } else { CLOSE_MS };
+        let t = (a.start.elapsed().as_secs_f32() * 1000.0 / dur).clamp(0.0, 1.0);
+        let p = if a.opening { 1.0 - (1.0 - t).powi(3) } else { 1.0 - t };
+        let (dx, dy) = geometry::slide_offset(self.settings.edge, p, self.panel_scale);
+        (r.x + dx, r.y + dy, (p * 255.0).round() as u8, t >= 1.0)
+    }
+
+    fn render_panel(&mut self) -> bool {
+        let Some(m) = self.monitor() else { return false };
+        let Some(r) = self.renderer.as_ref() else { return false };
+        let strip = geometry::strip_rect(&m, self.settings.edge);
+        let lay = {
+            let measure = r.measure();
+            let ctx = Ctx {
+                snap: &self.snapshot,
+                light: &self.light,
+                view: &self.view,
+                max_h: geometry::max_content_h(&m),
+                measure: &measure,
+                local: &local_parts,
+            };
+            layout(&ctx)
+        };
+        self.view.scroll = self.view.scroll.clamp(0.0, lay.scroll_max);
+        self.panel_rect = geometry::panel_rect(&m, self.settings.edge, strip, lay.height);
+        self.panel_scale = m.scale;
+        let (x, y, alpha, _) = self.frame();
+        let at = Rect { x, y, ..self.panel_rect };
+        let panel = self.panel;
+        let Some(r) = self.renderer.as_mut() else { return false };
+        if let Err(e) = r.render(&lay, self.panel_rect, m.scale) {
+            log::warn(&e);
+            return false;
+        }
+        r.present(panel, at, alpha);
+        self.layout = Some(lay);
+        true
+    }
+
+    fn show_panel(&mut self) {
+        if self.locked {
+            self.hover.visible = false;
+            return;
+        }
+        let now = timefmt::now_ms();
+        if self.fixture.is_none() {
+            self.collector.tick(now, &self.probe, true);
+            self.snapshot = self.collector.snapshot(now, self.settings.warn_percent);
+            if self.collector.usage_age_ms(now).is_none_or(|age| age > STALE_USAGE_MS) {
+                if let Some(w) = &self.worker {
+                    w.refresh();
+                }
+            }
+        }
+        self.anim = Some(Anim { start: Instant::now(), opening: true });
+        if !self.render_panel() {
+            self.anim = None;
+            self.hover.visible = false;
+            return;
+        }
+        win::show_noactivate(self.panel);
+        unsafe {
+            SetTimer(Some(self.controller), TIMER_ANIM, 16, None);
+        }
+    }
+
+    fn hide_panel(&mut self) {
+        self.view.hovered = None;
+        self.anim = Some(Anim { start: Instant::now(), opening: false });
+        unsafe {
+            SetTimer(Some(self.controller), TIMER_ANIM, 16, None);
+        }
+    }
+
+    fn step_anim(&mut self) {
+        let Some(a) = self.anim else {
+            unsafe {
+                let _ = KillTimer(Some(self.controller), TIMER_ANIM);
+            }
+            return;
+        };
+        let (x, y, alpha, done) = self.frame();
+        layered::move_and_fade(self.panel, x, y, alpha);
+        if done {
+            self.anim = None;
+            unsafe {
+                let _ = KillTimer(Some(self.controller), TIMER_ANIM);
+            }
+            if !a.opening {
+                win::hide(self.panel);
+                self.layout = None;
+                self.view.scroll = 0.0;
+            }
+        }
+    }
+
+    fn dispatch(&mut self, ev: Event) {
+        for action in self.hover.step(ev) {
+            match action {
+                Action::Show => self.show_panel(),
+                Action::Hide => self.hide_panel(),
+                Action::StartCloseTimer => unsafe {
+                    SetTimer(Some(self.controller), TIMER_CLOSE, CLOSE_DELAY_MS, None);
+                },
+                Action::CancelCloseTimer => unsafe {
+                    let _ = KillTimer(Some(self.controller), TIMER_CLOSE);
+                },
+                Action::Acknowledge => {
+                    self.collector.acknowledge();
+                    self.refresh();
+                }
+                Action::PinChanged(p) => {
+                    self.view.pinned = p;
+                    if self.hover.visible {
+                        self.render_panel();
+                    }
+                }
+            }
+        }
+    }
+
+    fn hit(&self, lp: LPARAM) -> Option<Hit> {
+        let (px, py) = lparam_xy(lp);
+        let s = self.panel_scale.max(0.1);
+        let (x, y) = (px as f32 / s - geometry::SHADOW, py as f32 / s - geometry::SHADOW);
+        self.layout.as_ref().and_then(|l| l.hit_at(x, y).cloned())
+    }
+
+    // ------------------------------------------------------------ menu
+
+    fn show_menu(&mut self) {
+        let cmd = {
+            let st = MenuState { panel_visible: self.hover.visible, settings: &self.settings, monitors: &self.monitors };
+            menu::popup(self.controller, &st)
+        };
+        self.on_command(cmd);
+    }
+
+    fn on_command(&mut self, cmd: u32) {
+        match cmd {
+            0 => return,
+            menu::CMD_TOGGLE => {
+                self.dispatch(Event::TrayClick);
+                return;
+            }
+            menu::CMD_EDGE_TOP | menu::CMD_EDGE_LEFT => {
+                self.settings.edge = if cmd == menu::CMD_EDGE_TOP { Edge::Top } else { Edge::Left };
+                self.reposition();
+            }
+            menu::CMD_MONITOR_PRIMARY => {
+                self.settings.monitor = "primary".to_string();
+                self.reposition();
+            }
+            c if (menu::CMD_MONITOR_FIRST..menu::CMD_MONITOR_FIRST + menu::MAX_MONITORS as u32).contains(&c) => {
+                if let Some(m) = self.monitors.get((c - menu::CMD_MONITOR_FIRST) as usize) {
+                    self.settings.monitor = m.id.clone();
+                    self.reposition();
+                }
+            }
+            menu::CMD_WARN_80 | menu::CMD_WARN_85 | menu::CMD_WARN_90 => {
+                self.settings.warn_percent = match cmd {
+                    menu::CMD_WARN_80 => 80,
+                    menu::CMD_WARN_85 => 85,
+                    _ => 90,
+                };
+                self.refresh();
+            }
+            menu::CMD_AUTOSTART => {
+                self.settings.autostart = !self.settings.autostart;
+                if let Ok(exe) = std::env::current_exe() {
+                    system::sync_autostart(self.settings.autostart, &exe);
+                }
+            }
+            menu::CMD_STATUS_PAGE => {
+                system::open_url(STATUS_URL);
+                return;
+            }
+            menu::CMD_EXIT => {
+                unsafe {
+                    let _ = DestroyWindow(self.controller);
+                }
+                return;
+            }
+            _ => return,
+        }
+        self.save_settings();
+    }
+
+    // ------------------------------------------------------------ window procs
+
+    fn on_strip(&mut self, msg: u32, _wp: WPARAM, _lp: LPARAM) -> Option<LRESULT> {
+        match msg {
+            WM_MOUSEACTIVATE => return Some(LRESULT(MA_NOACTIVATE as isize)),
+            WM_MOUSEMOVE => {
+                if !self.strip_tracking {
+                    track(self.strip, TME_HOVER | TME_LEAVE, HOVER_MS);
+                    self.strip_tracking = true;
+                    self.dispatch(Event::StripEnter);
+                }
+            }
+            WM_MOUSEHOVER => self.dispatch(Event::StripHover),
+            WM_MOUSELEAVE => {
+                self.strip_tracking = false;
+                self.dispatch(Event::StripLeave);
+            }
+            WM_LBUTTONUP => self.dispatch(Event::StripClick),
+            // Handled (not DefWindowProc) so Windows does not resize the strip for us.
+            WM_DPICHANGED => self.reposition(),
+            _ => return None,
+        }
+        Some(LRESULT(0))
+    }
+
+    fn on_panel(&mut self, msg: u32, wp: WPARAM, lp: LPARAM) -> Option<LRESULT> {
+        match msg {
+            WM_MOUSEACTIVATE => return Some(LRESULT(MA_NOACTIVATE as isize)),
+            WM_MOUSEMOVE => {
+                if !self.panel_tracking {
+                    track(self.panel, TME_LEAVE, 0);
+                    self.panel_tracking = true;
+                    self.dispatch(Event::PanelEnter);
+                }
+                let h = self.hit(lp);
+                if h != self.view.hovered {
+                    self.view.hovered = h;
+                    self.render_panel();
+                }
+            }
+            WM_MOUSELEAVE => {
+                self.panel_tracking = false;
+                if self.view.hovered.take().is_some() && self.hover.visible {
+                    self.render_panel();
+                }
+                self.dispatch(Event::PanelLeave);
+            }
+            WM_LBUTTONUP => match self.hit(lp) {
+                Some(Hit::Pin) => self.dispatch(Event::PinClick),
+                Some(Hit::Session(id)) | Some(Hit::SessionName(id)) => {
+                    let current = self.snapshot.sessions.iter().find(|s| s.session_id == id).map(|s| is_expanded(&self.view, s));
+                    if let Some(open) = current {
+                        self.view.expanded.insert(id, !open);
+                        self.render_panel();
+                    }
+                }
+                Some(Hit::StatusLink) => system::open_url(STATUS_URL),
+                None => {}
+            },
+            WM_MOUSEWHEEL => {
+                let delta = ((wp.0 >> 16) & 0xFFFF) as u16 as i16;
+                let max = self.layout.as_ref().map_or(0.0, |l| l.scroll_max);
+                self.view.scroll = (self.view.scroll - delta as f32 / 120.0 * WHEEL_STEP).clamp(0.0, max);
+                self.render_panel();
+            }
+            WM_DPICHANGED => self.reposition(),
+            _ => return None,
+        }
+        Some(LRESULT(0))
+    }
+
+    fn on_controller(&mut self, msg: u32, wp: WPARAM, lp: LPARAM) -> Option<LRESULT> {
+        match msg {
+            WM_TIMER if wp.0 == TIMER_TICK => self.tick(),
+            WM_TIMER if wp.0 == TIMER_CLOSE => {
+                unsafe {
+                    let _ = KillTimer(Some(self.controller), TIMER_CLOSE);
+                }
+                self.dispatch(Event::CloseTimer);
+            }
+            WM_TIMER if wp.0 == TIMER_ANIM => self.step_anim(),
+            WM_WORKER => {
+                self.drain_worker();
+                self.refresh();
+            }
+            WM_TRAY => match (lp.0 as u32) & 0xFFFF {
+                WM_LBUTTONUP => self.dispatch(Event::TrayClick),
+                WM_RBUTTONUP => self.show_menu(),
+                _ => {}
+            },
+            WM_DISPLAYCHANGE => self.reposition(),
+            WM_SETTINGCHANGE if wp.0 == SPI_SETWORKAREA => self.reposition(),
+            WM_POWERBROADCAST if wp.0 == PBT_APMRESUMEAUTOMATIC || wp.0 == PBT_APMRESUMESUSPEND => self.wake(),
+            WM_WTSSESSION_CHANGE if wp.0 == WTS_SESSION_LOCK => {
+                self.locked = true;
+                self.dispatch(Event::Suppress);
+                self.update_strip();
+            }
+            WM_WTSSESSION_CHANGE if wp.0 == WTS_SESSION_UNLOCK => {
+                self.locked = false;
+                self.wake();
+            }
+            m if self.taskbar_created != 0 && m == self.taskbar_created => {
+                self.tray.reset();
+                self.update_tray();
+                self.reposition(); // the taskbar may have moved or resized
+            }
+            _ => return None,
+        }
+        Some(LRESULT(0))
+    }
+}
+
+extern "system" fn controller_proc(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM) -> LRESULT {
+    if let Some(Some(r)) = with_app(|a| a.on_controller(msg, wp, lp)) {
+        return r;
+    }
+    if msg == WM_DESTROY {
+        unsafe { PostQuitMessage(0) };
+        return LRESULT(0);
+    }
+    unsafe { DefWindowProcW(hwnd, msg, wp, lp) }
+}
+
+extern "system" fn strip_proc(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM) -> LRESULT {
+    match with_app(|a| a.on_strip(msg, wp, lp)) {
+        Some(Some(r)) => r,
+        _ if msg == WM_MOUSEACTIVATE => LRESULT(MA_NOACTIVATE as isize),
+        _ => unsafe { DefWindowProcW(hwnd, msg, wp, lp) },
+    }
+}
+
+extern "system" fn panel_proc(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM) -> LRESULT {
+    match with_app(|a| a.on_panel(msg, wp, lp)) {
+        Some(Some(r)) => r,
+        _ if msg == WM_MOUSEACTIVATE => LRESULT(MA_NOACTIVATE as isize),
+        _ => unsafe { DefWindowProcW(hwnd, msg, wp, lp) },
+    }
+}
+```
+
+- [ ] **Step 3: Build and verify**
+
+```powershell
+cargo build --release
+cargo clippy --all-targets -- -D warnings
+Remove-Item Env:CLAUDEHUD_FIXTURE -ErrorAction SilentlyContinue
+Remove-Item target\release\claudehud.settings.json -ErrorAction SilentlyContinue   # simulate first run
+Start-Process target\release\claudehud.exe
+```
+
+Ask the user to confirm:
+1. **First run:** a balloon "ClaudeHUD is running …" appears once. Restart the app and it does not appear again. `target\release\claudehud.settings.json` now exists with `"first_run_done": true`.
+2. **Menu:** right-click the tray icon. It is dark if Windows is in dark mode, with "Show panel" in bold. It has Edge ▸ (Top •), Monitor ▸ (Primary display •, one line per display), Warn at 85% ▸ (85% •), Run on startup, Open status page, Exit.
+3. **Edge:** Edge ▸ Left moves the strip to the left edge, vertically centred. Hovering it slides the panel out to the right. Switch back to Top.
+4. **Monitor:** Monitor ▸ the external display moves the strip there. It must be correctly sized on the 100% display after being on the ~164% laptop: 132 × 4 px there, not ~216 × 7. Then back to Primary display.
+5. **Warn at:** Warn at ▸ 80% while weekly usage is between 80% and 85% makes the strip amber. Otherwise check the tooltip and panel meters recolour.
+6. **Run on startup:** tick it, then check `reg query HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v ClaudeHUD` shows the quoted exe path. Untick it and the value is gone.
+7. **Portable path fix:** tick Run on startup, Exit, copy the exe to another folder, run it from there. The Run value now points to the new path.
+8. **Fullscreen:** start a fullscreen video or game. The strip disappears and returns when fullscreen ends.
+9. **Lock:** press Win+L, then unlock. The strip is back, and the panel does not show over the lock screen.
+10. **Sleep:** sleep the laptop and wake it. Within 2 s the strip reflects the current state and the tooltip's usage refreshes.
+11. **Taskbar:** move the taskbar to the left or top of the screen (or change display scaling). The strip re-centres on the work area.
+12. **Explorer restart:** restart `explorer.exe` from Task Manager. The tray icon comes back.
+
+- [ ] **Step 4: Record the deviations in the spec**
+
+In `PLAN-CLAUDEHUD.md`:
+- §1, the rule starting "**Crash red latches**": replace "until the panel is opened (the acknowledgement) or the tray is clicked" with "until the panel that shows it closes again (the acknowledgement), so the crash row stays readable while the panel is open".
+- §3.3: replace the paragraph starting "One row per agent file active in the current turn" with: "Listed if the agent's transcript changed in the last 15 min. **Done** when its last assistant line has `stop_reason: \"end_turn\"`; **failed** on an exhausted `api_error`; otherwise **running** if written in the last 10 min, else **stopped**. (Background agents return a `tool_result` immediately, so the parent transcript cannot tell whether they are running.)"
+- §4 "States with dedicated copy": replace "**first run** (panel opens pinned once with a note that the tray menu holds settings)" with "**first run** (a one-time tray balloon: hover the light for details, right-click the icon for settings)".
+
+- [ ] **Step 5: Commit**
+
+```powershell
+cargo fmt
+git add src/platform PLAN-CLAUDEHUD.md
+git commit -m "feat(app): tray menu, settings, display/power/lock/fullscreen handling, autostart"
+```

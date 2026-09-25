@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ClaudeHUD — UI design suggestion</title>
+<style>
+  :root{
+    --green:#4FBE86; --yellow:#E9DA4C; --amber:#F08A3E; --red:#E0444E; --off:#3B3F46;
+    --surface:#1C1D21; --surface-2:#24262B; --border:#FFFFFF14; --divider:#FFFFFF0F;
+    --ink:#ECECEE; --ink-2:#A4A6AD; --ink-3:#6E7078;
+    --font:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#0E0F12;color:var(--ink);font:13px/1.4 var(--font);padding:32px 40px 64px}
+  h1{font-size:22px;font-weight:600;margin:0 0 4px}
+  h2{font-size:15px;font-weight:600;margin:40px 0 4px}
+  p.lead,p.note{color:var(--ink-2);margin:0 0 16px;max-width:900px}
+  p.note{font-size:12px;color:var(--ink-3)}
+  code{font-family:Cascadia Code,Consolas,monospace;font-size:12px;color:var(--ink-2)}
+
+  /* mock desktop */
+  .desk{position:relative;border-radius:10px;overflow:hidden;border:1px solid #2A2C31;
+        background:linear-gradient(135deg,#2B3A4F 0%,#1D2533 55%,#242033 100%)}
+  .desk .app{position:absolute;inset:0 0 40px 0;background:#1E1E1E;opacity:.93}
+  .desk .app .titlebar{height:32px;background:#2A2A2A;display:flex;align-items:center;padding:0 12px;color:#8a8a8a;font-size:12px}
+  .desk .app .code{padding:16px 20px;font:12px/1.7 Cascadia Code,Consolas,monospace;color:#6f7680;white-space:pre}
+  .desk .taskbar{position:absolute;left:0;right:0;bottom:0;height:40px;background:#202020EE;border-top:1px solid #333}
+  .edge-label{position:absolute;font-size:11px;color:#ffffff66}
+
+  /* strip */
+  .strip{position:absolute;border-radius:2px;cursor:default;z-index:5}
+  .strip.top{width:132px;height:4px;top:0;left:50%;transform:translateX(-50%)}
+  .strip.left{width:4px;height:132px;left:0;top:calc(50% - 20px);transform:translateY(-50%)}
+  .strip.dim{opacity:.55}
+  .strip::after{content:"";position:absolute;inset:-6px}/* mock-only: easier to hover in a browser */
+
+  /* panel */
+  .panel{position:absolute;width:360px;background:color-mix(in srgb,var(--surface) 96%,transparent);
+         border:1px solid var(--border);border-radius:12px;
+         box-shadow:0 12px 32px #0009,0 2px 6px #0006;z-index:6;
+         transition:opacity 180ms ease-out,transform 180ms ease-out}
+  .panel.top{top:12px;left:50%;transform:translate(-50%,0)}
+  .panel.left{left:12px;top:50%;transform:translate(0,-55%)}
+  .panel.top.closed{opacity:0;transform:translate(-50%,-12px);pointer-events:none;transition-duration:140ms}
+  .panel.left.closed{opacity:0;transform:translate(-12px,-55%);pointer-events:none;transition-duration:140ms}
+  .panel.static{position:relative;top:auto;left:auto;transform:none}
+
+  .hdr{padding:14px 16px 12px;display:flex;gap:10px;align-items:flex-start}
+  .hdr .plan{font-size:14px;font-weight:600}
+  .hdr .spend{color:var(--ink-2);font-weight:400}
+  .hdr .sum{color:var(--ink-2);font-size:12px;margin-top:2px;display:flex;align-items:center;gap:6px}
+  .hdr .grow{flex:1;min-width:0}
+  .pin{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;color:var(--ink-3);cursor:pointer;flex:none}
+  .pin:hover{background:var(--surface-2);color:var(--ink-2)}
+  .pin.on{color:var(--ink);background:var(--surface-2)}
+  .banner{margin:0 12px 10px;padding:8px 10px;border-radius:8px;background:#E0444E1F;border:1px solid #E0444E40;font-size:12px;display:flex;gap:8px}
+  .banner b{font-weight:600}
+
+  .sec{padding:10px 16px;border-top:1px solid var(--divider)}
+  .sec-t{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px}
+
+  .lim{margin-bottom:10px}
+  .lim:last-child{margin-bottom:2px}
+  .lim .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:12px}
+  .lim .lab{color:var(--ink)}
+  .lim .rst{color:var(--ink-3)}
+  .lim .pct{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums;min-width:36px;text-align:right}
+  .meter{display:flex;align-items:center;gap:10px;margin-top:5px}
+  .track{flex:1;height:6px;border-radius:3px;overflow:hidden}
+  .fill{height:100%;border-radius:3px}
+
+  .dot{width:8px;height:8px;border-radius:50%;flex:none;display:inline-block}
+  .dot.sm{width:6px;height:6px}
+  .ring{box-shadow:0 0 0 1px #ffffff40 inset;background:transparent}
+
+  .sess{padding:8px 16px;cursor:pointer;position:relative}
+  .sess:hover{background:#FFFFFF06}
+  .sess .l1{display:flex;align-items:center;gap:8px}
+  .sess .name{font-weight:600;position:relative;white-space:nowrap;flex:none}
+  .sess .state{color:var(--ink-2);font-size:12px;margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .sess .why{color:var(--ink-2)}
+  .sess .l2{color:var(--ink-3);font-size:12px;margin:2px 0 0 16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chev{color:var(--ink-3);font-size:10px;width:10px;display:inline-block;transition:transform 120ms}
+  .sess.open .chev{transform:rotate(90deg)}
+  .agents{margin:6px 0 2px 16px;border-left:1px solid var(--divider);display:none}
+  .sess.open .agents{display:block}
+  .ag{display:grid;grid-template-columns:10px 92px 1fr auto;gap:8px;align-items:center;padding:3px 0 3px 10px;font-size:12px}
+  .ag .ty{color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ag .ds{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ag .mt{color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .ag.done .ds{color:var(--ink-3)}
+  .more{padding:6px 16px 8px 32px;color:var(--ink-3);font-size:12px}
+  .empty{padding:14px 16px 16px;color:var(--ink-2);font-size:12px}
+  .empty b{display:block;color:var(--ink);font-size:13px;font-weight:600;margin-bottom:2px}
+
+  /* in-panel tooltip (drawn by ClaudeHUD, clamped to panel width) */
+  .tip{position:absolute;left:0;top:calc(100% + 6px);z-index:9;max-width:300px;white-space:nowrap;
+       background:#2E3036;border:1px solid #FFFFFF1F;border-radius:6px;padding:5px 8px;
+       font:400 12px/1.3 Cascadia Code,Consolas,monospace;color:var(--ink);box-shadow:0 4px 12px #0008;
+       opacity:0;transform:translateY(-2px);transition:opacity 120ms,transform 120ms;pointer-events:none}
+  .name:hover .tip,.tip.show{opacity:1;transform:none}
+  .tip .k{color:var(--ink-3);font-family:var(--font);display:block;font-size:11px;margin-bottom:1px}
+
+  .ftr{padding:10px 16px 12px;border-top:1px solid var(--divider);font-size:12px}
+  .ftr .l1{display:flex;align-items:center;gap:8px}
+  .ftr .l1 a{margin-left:auto;color:var(--ink-3);text-decoration:none}
+  .ftr .l1 a:hover{color:var(--ink-2)}
+  .ftr .comps{display:flex;gap:14px;margin:6px 0 0 16px;color:var(--ink-3)}
+  .ftr .comps span{display:flex;align-items:center;gap:5px}
+  .ftr .health{margin:6px 0 0 16px;color:var(--ink-3)}
+
+  /* layout helpers */
+  .grid{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+  .cap{font-size:12px;color:var(--ink-3);margin:8px 0 0}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:8px}
+  .lg{background:#16171B;border:1px solid #26282E;border-radius:10px;padding:14px 16px;width:164px}
+  .lg .bar{height:4px;width:132px;border-radius:2px;margin:6px 0 12px}
+  .lg b{display:block;font-size:13px}
+  .lg span{color:var(--ink-2);font-size:12px}
+
+  /* tray (Windows 11 native look) */
+  .tb-desk{position:relative;height:430px;border-radius:10px;overflow:hidden;border:1px solid #2A2C31;
+           background:linear-gradient(135deg,#2B3A4F 0%,#1D2533 55%,#242033 100%)}
+  .tb{position:absolute;left:0;right:0;bottom:0;height:48px;background:#1C1C1CF2;border-top:1px solid #FFFFFF14;
+      display:flex;align-items:center;justify-content:flex-end;padding:0 10px;gap:2px;font:12px "Segoe UI Variable Text","Segoe UI",sans-serif;color:#fff}
+  .tb .ic{width:32px;height:40px;border-radius:4px;display:grid;place-items:center;color:#ddd}
+  .tb .ic.hot{background:#FFFFFF14}
+  .tb .clock{text-align:right;line-height:1.25;padding:0 8px;font-size:12px}
+  .tray-dot{width:16px;height:16px;border-radius:50%;box-shadow:0 0 0 1.5px #0008 inset}
+  .tray-dot.off{background:transparent;box-shadow:0 0 0 1.5px #9A9CA3 inset}
+  .wtip{position:absolute;background:#2B2B2B;border:1px solid #FFFFFF1A;border-radius:6px;padding:6px 9px;
+        font:12px/1.45 "Segoe UI Variable Text","Segoe UI",sans-serif;color:#fff;box-shadow:0 6px 16px #0009;white-space:pre}
+  .wmenu{position:absolute;min-width:236px;background:#2C2C2C;border:1px solid #FFFFFF1A;border-radius:8px;padding:4px;
+         box-shadow:0 8px 24px #000A;font:14px "Segoe UI Variable Text","Segoe UI",sans-serif;color:#fff}
+  .wmenu .it{height:32px;border-radius:4px;display:grid;grid-template-columns:28px 1fr auto;align-items:center;padding:0 10px 0 4px;cursor:default}
+  .wmenu .it:hover,.wmenu .it.hot{background:#FFFFFF0F}
+  .wmenu .it.def .t{font-weight:600}
+  .wmenu .it .k{font-size:12px;color:#fff;text-align:center}
+  .wmenu .it .a{color:#ccc;font-size:11px}
+  .wmenu .it .h{color:#9A9CA3;font-size:12px;margin-right:8px}
+  .wmenu .sep{height:1px;background:#FFFFFF14;margin:4px 0}
+  .icons{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px}
+  .icard{background:#16171B;border:1px solid #26282E;border-radius:10px;padding:12px 14px;width:284px}
+  .icard .tbmini{height:40px;background:#1C1C1C;border-radius:6px;display:flex;align-items:center;gap:10px;padding:0 10px;margin-bottom:10px}
+  .icard b{font-size:13px}
+  /* app icon: crop the rounded tile out of ClaudeHUD_icon.jpg (2000×1091, tile ≈ x590–1410, y135–955) */
+  .appicon{--s:28px;width:var(--s);height:var(--s);flex:none;border-radius:calc(var(--s)*.22);
+           background:url(ClaudeHUD_icon.jpg) no-repeat;background-size:calc(var(--s)*2.439) auto;
+           background-position:calc(var(--s)*-.7195) calc(var(--s)*-.1646)}
+  h1{display:flex;align-items:center;gap:12px}
+  .sizes{display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap;margin-top:10px}
+  .sizes figure{margin:0;color:var(--ink-3);font-size:11px;display:flex;flex-direction:column;align-items:center}
+  .sizes figure svg{display:block}
+  .sizes figure>*{margin:0 auto 6px}
+  .sizes .on-tb{background:#1C1C1C;border-radius:8px;padding:10px;display:inline-flex;gap:14px;align-items:center}
+  .icard pre{margin:6px 0 0;font:12px/1.45 "Segoe UI Variable Text","Segoe UI",sans-serif;color:var(--ink-2);white-space:pre-wrap}
+</style>
+</head>
+<body>
+
+<h1><span class="appicon" style="--s:40px"></span>ClaudeHUD — UI design suggestion</h1>
+<p class="lead">A 4 px light strip on the screen edge. Hover it for 250 ms and the detail panel slides
+out from the strip. This is a design mockup: the real panel is drawn natively with Direct2D, and the
+HTML is only here to show the layout. Spec: <code>PLAN-CLAUDEHUD.md §2.2–2.3, §4</code>.</p>
+
+<h2>1 · Top edge, Team plan (default placement)</h2>
+<p class="note">Interactive. Click the pin (or the strip) to unpin, then move away and hover the strip
+again to see the reveal. Hover a session name to see its working folder. Click a session to
+collapse/expand its sub-agents.</p>
+<div class="desk" id="deskA" style="height:760px">
+  <div class="app"><div class="titlebar">portal-service — Visual Studio Code</div>
+    <div class="code">export async function reconcile(batch: Batch) {
+  const pending = await store.pending(batch.id);
+  for (const item of pending) {
+    …</div></div>
+  <div class="taskbar"></div>
+  <div class="strip top" id="stripA"></div>
+  <div class="panel top" id="panelA"></div>
+</div>
+
+<h2>2 · Left edge, Enterprise plan with spend limit</h2>
+<p class="note">The panel slides right from the strip. For Enterprise the header shows spend, and the
+usage block shows the monthly spend meter instead of the 5-hour and weekly windows. claude.ai is
+degraded here, which is shown in the footer but does not turn the strip red.</p>
+<div class="desk" id="deskB" style="height:560px">
+  <div class="app"><div class="titlebar">billing-api — Windows Terminal</div>
+    <div class="code">&gt; claude
+  ✻ Working… (4m · esc to interrupt)</div></div>
+  <div class="taskbar"></div>
+  <div class="strip left" id="stripB"></div>
+  <div class="panel left" id="panelB"></div>
+</div>
+
+<h2>3 · Other states</h2>
+<div class="grid">
+  <div><div id="panelC"></div><p class="cap">Limit reached: strip red, no glow. The banner says when turns will work again.</p></div>
+  <div><div id="panelD"></div><p class="cap">No sessions: strip off. Opened from the tray icon; usage and status still shown.</p></div>
+</div>
+
+<h2>4 · The light</h2>
+<p class="note">Priority red › yellow › amber › green › off. Solid colours with no animation; busy vs idle
+is a brightness step. The colours pass the palette validator's colour-blind and normal-vision
+separation checks on this surface.</p>
+<div class="legend" id="legend"></div>
+
+<h2>5 · Tray icon and menu</h2>
+<p class="note">A native <code>Shell_NotifyIcon</code> icon with a native <code>TrackPopupMenu</code> menu, drawn
+by Windows so it matches the system exactly. Left-click the icon to show/hide the panel (and acknowledge a
+latched red). Hover for the tooltip. Right-click for the menu. In the mockup below, hover the icon to see
+the tooltip and hover "Edge" / "Monitor" / "Warn at" to see the submenus.</p>
+<div class="tb-desk" id="trayDesk">
+  <div class="wtip" id="wtip" style="right:196px;bottom:58px;display:none"></div>
+  <div class="wmenu" id="wmenu" style="right:120px;bottom:56px"></div>
+  <div class="wmenu" id="wsub" style="right:360px;bottom:170px;min-width:160px;display:none"></div>
+  <div class="tb">
+    <div class="ic">⌃</div>
+    <div class="ic" title="Wi-Fi">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#ddd" stroke-width="1.3"><path d="M1.5 6a9.5 9.5 0 0 1 13 0M3.8 8.4a6.2 6.2 0 0 1 8.4 0M6 10.8a3 3 0 0 1 4 0"/><circle cx="8" cy="13" r=".9" fill="#ddd"/></svg></div>
+    <div class="ic" title="Volume">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#ddd" stroke-width="1.3"><path d="M2 6h2.5L8 3v10L4.5 10H2z"/><path d="M10.5 5.5a3.5 3.5 0 0 1 0 5M12.3 3.8a6 6 0 0 1 0 8.4"/></svg></div>
+    <div class="ic hot" id="trayIcon"><span id="trayDot" style="display:flex"></span></div>
+    <div class="clock">12:41<br>25/09/2026</div>
+  </div>
+</div>
+<p class="cap">Menu order: the panel toggle (bold, the default action), placement settings, startup,
+status page, Exit. Settings apply immediately and are saved to <code>claudehud.settings.json</code>.</p>
+
+<h3 style="font-size:13px;margin:22px 0 0">Icon and tooltip per state</h3>
+<p class="note">The pixel creature from the app icon, drawn at runtime from a 12 × 7 pixel map,
+with a status badge in the light's colour (bottom-right, with a 1 px cut-out ring so it separates from
+the body). Off = grey creature, no badge. Shown at 16 px (100%) and 32 px (200% scaling). The tooltip is two lines, at most
+127 characters: the reason for the colour, then counts and usage.</p>
+<div class="icons" id="iconStates"></div>
+
+<h2>6 · App icon</h2>
+<p class="note">Source: <code>ClaudeHUD_icon.jpg</code>. The full artwork is used at 32 px and above (exe
+icon in Explorer, panel header, first-run). Below 32 px the orbits and balls blur into noise, so the small
+sizes use a simplified tile: the same indigo→violet background with only the pixel creature. The tray
+does not use the tile; it uses the bare creature plus status badge (§5).</p>
+<div class="sizes" id="sizes"></div>
+
+<script>
+const C={green:"#4FBE86",yellow:"#E9DA4C",amber:"#F08A3E",red:"#E0444E",off:"#3B3F46",muted:"#6E7078"};
+const WARN=85;
+const sev=p=>p>=100?C.red:p>=WARN?C.amber:C.green;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function midEllipsis(path,max=40){
+  if(path.length<=max) return path;
+  const parts=path.split("\\"), head=parts.slice(0,2).join("\\"), tail=parts[parts.length-1];
+  return `${head}\\…\\${tail}`.length<=max?`${head}\\…\\${tail}`:"…\\"+tail;
+}
+const PIN=`<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M9.5 2.5l4 4-2 1-2.5 2.5-.5 3-2-2-3.5 3.5M5.5 9.5l-2-2 3-.5L9 4.5l.5-2"/></svg>`;
+const stateDot={waiting:C.yellow,busy:C.green,idle:C.green,crashed:C.red};
+
+function limitRow(l){
+  const col=sev(l.pct);
+  return `<div class="lim"><div class="row"><span class="lab">${esc(l.label)}</span>
+    <span class="rst">${esc(l.reset)}</span></div>
+    <div class="meter"><div class="track" style="background:${col}2E"><div class="fill" style="width:${Math.min(l.pct,100)}%;background:${col}"></div></div>
+    <span class="pct">${l.pctLabel??l.pct+"%"}</span></div></div>`;
+}
+function agentRow(a){
+  const col=a.st==="running"?C.green:a.st==="failed"?C.red:C.muted;
+  return `<div class="ag ${a.st}"><span class="dot sm" style="background:${col}" title="${a.st}"></span>
+    <span class="ty">${esc(a.type)}</span><span class="ds">${esc(a.desc)}</span>
+    <span class="mt">${esc(a.time)} · ${esc(a.tok)}</span></div>`;
+}
+function sessionRow(s){
+  const dim=s.state==="idle"?"opacity:.55":"";
+  const agents=s.agents||[];
+  const open=agents.length&&s.state!=="idle";
+  const running=agents.filter(a=>a.st==="running").length;
+  const agLabel=agents.length?` · ${agents.length} sub-agent${agents.length>1?"s":""}${running?` (${running} running)`:""}`:"";
+  return `<div class="sess ${open?"open":""}" onclick="this.classList.toggle('open')">
+    <div class="l1"><span class="chev">${agents.length?"▶":""}</span>
+      <span class="dot" style="background:${stateDot[s.state]};${dim}"></span>
+      <span class="name">${esc(s.name)}<span class="tip"><span class="k">Working folder</span>${esc(midEllipsis(s.cwd))}</span></span>
+      <span class="state">${esc(s.stateText)}</span></div>
+    <div class="l2">${s.why?`<span class="why">${esc(s.why)}</span> ·`:""} ${esc(s.model)} · ${esc(s.ctx)}${esc(agLabel)}</div>
+    ${agents.length?`<div class="agents">${agents.map(agentRow).join("")}</div>`:""}
+  </div>`;
+}
+function footer(f){
+  const comp=f.comps.map(c=>`<span><span class="dot sm" style="background:${c.col}"></span>${esc(c.name)}</span>`).join("");
+  return `<div class="ftr"><div class="l1"><span class="dot" style="background:${f.col}"></span>
+    <span>${esc(f.text)}</span><a href="https://status.claude.com" target="_blank" rel="noopener">status.claude.com ↗</a></div>
+    <div class="comps">${comp}</div>
+    <div class="health">checked ${esc(f.checked)}${f.health?" · "+esc(f.health):""}</div></div>`;
+}
+function panel(d){
+  const sess=d.sessions.length
+    ? d.sessions.map(sessionRow).join("")+(d.more?`<div class="more">+${d.more} idle</div>`:"")
+    : `<div class="empty"><b>No Claude sessions running</b>Start <code>claude</code> in a terminal and it appears here.</div>`;
+  return `<div class="hdr"><span class="appicon" style="--s:30px;margin-top:1px"></span><div class="grow">
+      <div class="plan">${esc(d.plan)}${d.spend?` <span class="spend">· ${esc(d.spend)}</span>`:""}</div>
+      <div class="sum">${d.sumDot?`<span class="dot sm" style="background:${d.sumDot}"></span>`:""}${esc(d.summary)}</div></div>
+      <div class="pin ${d.pinned?"on":""}" title="Keep open">${PIN}</div></div>
+    ${d.banner?`<div class="banner"><span class="dot" style="background:${C.red};margin-top:4px"></span><div>${d.banner}</div></div>`:""}
+    <div class="sec"><div class="sec-t">${esc(d.usageTitle||"Usage")}</div>${d.limits.map(limitRow).join("")}</div>
+    <div class="sec" style="padding:6px 0"><div class="sec-t" style="padding:4px 16px 0">Sessions</div>${sess}</div>
+    ${footer(d.footer)}`;
+}
+
+const OK=[{name:"Claude Code",col:C.green},{name:"Claude API",col:C.green},{name:"claude.ai",col:C.green}];
+const A={
+  plan:"Team · Max 5x", summary:"3 sessions · 1 needs you", sumDot:C.yellow, pinned:true,
+  limits:[
+    {label:"Current session · 5h",reset:"resets 14:32",pct:61},
+    {label:"Weekly · all models",reset:"resets Mon 09:00",pct:88},
+    {label:"Weekly · Opus",reset:"resets Mon 09:00",pct:42}],
+  sessions:[
+    {name:"portal-service",cwd:"C:\\Projects\\Work\\portal-service",state:"waiting",
+     stateText:"Needs you",why:"Approve the permission prompt",model:"Opus 5",ctx:"last turn 84.2k in"},
+    {name:"claudehud-a4",cwd:"C:\\Projects\\Personal\\ClaudeHUD",state:"busy",stateText:"Working · 12m",
+     model:"Opus 5",ctx:"last turn 132.6k in",agents:[
+       {type:"general-purpose",desc:"Draft hover state machine tests",time:"3m 05s",tok:"41.9k",st:"running"},
+       {type:"Explore",desc:"Locate WinHTTP proxy handling",time:"1m 12s",tok:"18.4k",st:"running"},
+       {type:"Explore",desc:"Find per-monitor DPI examples",time:"48s",tok:"9.1k",st:"done"}]},
+    {name:"docs-site",cwd:"C:\\Projects\\Personal\\docs-site\\packages\\website",state:"idle",
+     stateText:"Idle · 3m",model:"Sonnet 5",ctx:"last turn 22.1k in · compacted"}],
+  footer:{col:C.green,text:"All systems operational",comps:OK,checked:"2m ago"}
+};
+const B={
+  plan:"Enterprise", spend:"$50 of $600 spent", summary:"1 session · working", sumDot:C.green, pinned:true,
+  usageTitle:"Spend",
+  limits:[{label:"Monthly spend",reset:"resets 1 Oct",pct:8,pctLabel:"$50 / $600"}],
+  sessions:[
+    {name:"billing-api",cwd:"C:\\src\\finance\\billing-api",state:"busy",stateText:"Working · 4m",
+     model:"Sonnet 5",ctx:"last turn 57.3k in",agents:[
+       {type:"Explore",desc:"Map invoice export endpoints",time:"1m 40s",tok:"12.7k",st:"running"}]}],
+  footer:{col:C.amber,text:"Degraded performance · claude.ai",
+    comps:[{name:"Claude Code",col:C.green},{name:"Claude API",col:C.green},{name:"claude.ai",col:C.amber}],checked:"1m ago"}
+};
+const Cst={
+  plan:"Team · Max 5x", summary:"Weekly limit spent", sumDot:C.red,
+  banner:"<b>Weekly limit spent.</b> New turns will fail until Mon 09:00.",
+  limits:[
+    {label:"Current session · 5h",reset:"resets 14:32",pct:12},
+    {label:"Weekly · all models",reset:"resets Mon 09:00",pct:100}],
+  sessions:[{name:"claudehud-a4",cwd:"C:\\Projects\\Personal\\ClaudeHUD",state:"idle",stateText:"Idle · 9m",
+    model:"Opus 5",ctx:"last turn 132.6k in"}],
+  footer:{col:C.green,text:"All systems operational",comps:OK,checked:"4m ago"}
+};
+const D={
+  plan:"Team · Max 5x", summary:"Nothing running", pinned:true,
+  limits:[
+    {label:"Current session · 5h",reset:"resets 14:32",pct:23},
+    {label:"Weekly · all models",reset:"resets Mon 09:00",pct:47}],
+  sessions:[],
+  footer:{col:C.green,text:"All systems operational",comps:OK,checked:"3m ago",health:"usage unavailable · rate limited"}
+};
+
+document.getElementById("panelA").innerHTML=panel(A);
+document.getElementById("panelB").innerHTML=panel(B);
+for(const [id,d] of [["panelC",Cst],["panelD",D]]){
+  const el=document.getElementById(id); el.className="panel static"; el.innerHTML=panel(d);
+}
+document.getElementById("stripA").style.background=C.yellow;
+document.getElementById("stripB").style.background=C.green;
+// first tooltip visible on load so the static view shows it
+document.querySelector("#panelA .sess .tip").classList.add("show");
+document.querySelector("#panelA .sess .name").addEventListener("mouseleave",e=>e.currentTarget.querySelector(".tip").classList.remove("show"),{once:true});
+
+// hover behaviour: 250 ms dwell to open, 300 ms grace to close, click strip or pin to toggle pin
+function wire(stripId,panelId){
+  const strip=document.getElementById(stripId), p=document.getElementById(panelId);
+  const pinEl=()=>p.querySelector(".pin");
+  let pinned=true, tOpen=null, tClose=null, inside=0;
+  const setPin=v=>{pinned=v;pinEl().classList.toggle("on",v);if(!v&&!inside)schedClose();};
+  const open=()=>p.classList.remove("closed");
+  const close=()=>{if(!pinned)p.classList.add("closed")};
+  const schedClose=()=>{clearTimeout(tClose);tClose=setTimeout(()=>{if(!inside)close()},300)};
+  const enter=isStrip=>{inside++;clearTimeout(tClose);
+    if(isStrip&&p.classList.contains("closed")){clearTimeout(tOpen);tOpen=setTimeout(open,250);}};
+  const leave=()=>{inside=Math.max(0,inside-1);clearTimeout(tOpen);schedClose();};
+  strip.addEventListener("mouseenter",()=>enter(true));
+  strip.addEventListener("mouseleave",leave);
+  p.addEventListener("mouseenter",()=>enter(false));
+  p.addEventListener("mouseleave",leave);
+  strip.addEventListener("click",()=>{open();setPin(!pinned)});
+  p.addEventListener("click",e=>{if(e.target.closest(".pin")){e.stopPropagation();setPin(!pinned)}});
+}
+wire("stripA","panelA"); wire("stripB","panelB");
+
+const L=[
+  ["Off","No session running",C.off,""],
+  ["Green, dim","Sessions open, all idle",C.green,"opacity:.55"],
+  ["Green","Claude is working",C.green,""],
+  ["Yellow","Claude needs your input",C.yellow,""],
+  ["Amber","Quota ≥ 85%",C.amber,""],
+  ["Red","Limit reached or error",C.red,""]];
+document.getElementById("legend").innerHTML=L.map(([t,s,c,st])=>
+  `<div class="lg"><b>${t}</b><div class="bar" style="background:${c};${st}"></div><span>${s}</span></div>`).join("");
+
+// ---- pixel creature (tray icon + small app-icon sizes) ----
+const CREATURE=[
+  "..########..",
+  "..#o####o#..",
+  "############",
+  "############",
+  "..########..",
+  "..#.#..#.#..",
+  "..#.#..#.#.."];
+const BODY="#DE7356", BODY_OFF="#8A8D94", EYE="#141414", TB="#1C1C1C";
+// badge: colour or null; opts.off greys the body; opts.dim fades the badge; opts.tile draws the app tile
+function creature(px,badge,opts={}){
+  const body=opts.off?BODY_OFF:BODY; let r="";
+  const ox=opts.tile?2:1, oy=opts.tile?4.5:3;
+  CREATURE.forEach((row,y)=>[...row].forEach((c,x)=>{
+    if(c===".")return;
+    r+=`<rect x="${ox+x}" y="${oy+y}" width="1" height="1" fill="${c==="o"?EYE:body}"/>`;
+  }));
+  const tile=opts.tile?`<defs><linearGradient id="tg${px}" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2F5BC4"/><stop offset="1" stop-color="#4A1F8C"/></linearGradient></defs>
+      <rect width="16" height="16" rx="3.6" fill="url(#tg${px})"/>`:"";
+  const b=badge?`<circle cx="12.6" cy="12.4" r="3.4" fill="${badge}" ${opts.dim?'fill-opacity=".55"':""}
+      stroke="${opts.ring||TB}" stroke-width="1.1"/>`:"";
+  return `<svg width="${px}" height="${px}" viewBox="0 0 16 16" shape-rendering="crispEdges">${tile}${r}${b.replace('<circle','<circle shape-rendering="geometricPrecision"')}</svg>`;
+}
+
+// ---- tray ----
+const CHECK="✓", RADIO="●";
+const MENU=[
+  {t:"Show panel",def:true},
+  "-",
+  {t:"Edge",sub:[{t:"Top",k:RADIO},{t:"Left"}]},
+  {t:"Monitor",sub:[{t:"Primary display",k:RADIO},{t:"DELL U2723QE"},{t:"Built-in display"}]},
+  {t:"Warn at",hint:"85%",sub:[{t:"80%"},{t:"85%",k:RADIO},{t:"90%"}]},
+  "-",
+  {t:"Run on startup",k:CHECK},
+  {t:"Open status page",hint:"↗"},
+  "-",
+  {t:"Exit"}];
+const item=(m,i)=>m==="-"?`<div class="sep"></div>`:
+  `<div class="it ${m.def?"def":""}" data-i="${i}"><span class="k">${m.k||""}</span><span class="t">${esc(m.t)}</span>
+   <span>${m.hint?`<span class="h">${esc(m.hint)}</span>`:""}${m.sub?`<span class="a">❯</span>`:""}</span></div>`;
+const wmenu=document.getElementById("wmenu"), wsub=document.getElementById("wsub"), wtip=document.getElementById("wtip");
+const desk=document.getElementById("trayDesk");
+wmenu.innerHTML=MENU.map(item).join("");
+function openSub(i){
+  const m=MENU[i], row=wmenu.querySelector(`[data-i="${i}"]`);
+  wmenu.querySelectorAll(".it").forEach(r=>r.classList.toggle("hot",r===row&&!!m.sub));
+  if(!m.sub){wsub.style.display="none";return;}
+  wsub.innerHTML=m.sub.map(item).join("");
+  wsub.style.display="block";
+  const deskR=desk.getBoundingClientRect(), rowR=row.getBoundingClientRect(), menuR=wmenu.getBoundingClientRect();
+  // near the right screen edge Windows opens submenus to the left
+  wsub.style.right=(deskR.right-menuR.left+2)+"px";
+  wsub.style.bottom="auto";
+  wsub.style.top=(rowR.top-deskR.top-5)+"px";
+}
+wmenu.addEventListener("mouseover",e=>{const r=e.target.closest(".it");if(r)openSub(+r.dataset.i)});
+openSub(2);
+const trayIcon=document.getElementById("trayIcon");
+document.getElementById("trayDot").innerHTML=creature(16,C.yellow);
+trayIcon.addEventListener("mouseenter",()=>{if(wmenu.style.display==="none"){
+  wtip.textContent="portal-service: approve the permission prompt\n3 running · 5h 61% · 7d 88%";wtip.style.display="block";}});
+trayIcon.addEventListener("mouseleave",()=>wtip.style.display="none");
+trayIcon.addEventListener("click",()=>{const hide=wmenu.style.display!=="none";
+  wmenu.style.display=hide?"none":"block"; wsub.style.display="none"; if(!hide)openSub(2); else trayIcon.dispatchEvent(new Event("mouseenter"));});
+
+const IS=[
+  ["Off","off","",   "ClaudeHUD · no Claude sessions\n5h 23% · 7d 47%"],
+  ["Green, dim",C.green,"opacity:.55","2 sessions open, all idle\n5h 61% · 7d 72%"],
+  ["Green",C.green,"","claudehud-a4 working · 12m\n3 running · 5h 61% · 7d 72%"],
+  ["Yellow",C.yellow,"","portal-service: approve the permission prompt\n3 running · 5h 61% · 7d 88%"],
+  ["Amber",C.amber,"","Weekly limit at 88% · resets Mon 09:00\n2 running · 5h 61% · 7d 88%"],
+  ["Amber, Enterprise",C.amber,"","Spend at 91% · $546 of $600 · resets 1 Oct\n1 running"],
+  ["Red, limit",C.red,"","Weekly limit spent · resets Mon 09:00\n1 idle · 5h 12% · 7d 100%"],
+  ["Red, crash (latched)",C.red,"","portal-service crashed mid-turn · click to acknowledge\n2 running · 5h 61% · 7d 72%"],
+  ["Red, incident",C.red,"","Claude API: partial outage\n2 running · 5h 61% · 7d 72%"]];
+document.getElementById("iconStates").innerHTML=IS.map(([t,c,st,tip])=>
+  `<div class="icard"><div class="tbmini">
+     ${creature(16,c==="off"?null:c,{off:c==="off",dim:!!st})}
+     ${creature(32,c==="off"?null:c,{off:c==="off",dim:!!st})}
+     <span style="color:#fff;font-size:12px;margin-left:auto">12:41</span></div><b>${t}</b><pre>${esc(tip)}</pre></div>`).join("");
+
+document.getElementById("sizes").innerHTML=
+  [256,128,64,48,32].map(s=>`<figure><div class="appicon" style="--s:${s}px"></div>${s} px · full art</figure>`).join("")+
+  [24,20,16].map(s=>`<figure>${creature(s,null,{tile:true})}${s} px · simplified</figure>`).join("")+
+  `<figure><div class="on-tb">${creature(16,C.green)}${creature(32,C.green)}</div>tray · creature + badge</figure>`;
+</script>
+</body>
+</html>
