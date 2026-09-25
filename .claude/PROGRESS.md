@@ -10,12 +10,10 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Task 9 (in progress — dispatched to sonnet sub-agent, no worktree isolation
-  needed since it's a single sequential task).
-- **Next action:** review Task 9 sub-agent's work when it finishes, report to user, wait for
-  go-ahead before Task 10.
-- **Branch:** `main` at `2b8db6a`.
-- **Waiting on user:** nothing right now
+- **Current task:** Task 9 done. Task 10 not started.
+- **Next action:** waiting on user go-ahead to start Task 10 (tooltip + icon pixel maths — sonnet).
+- **Branch:** `main` at `92c9db6`.
+- **Waiting on user:** confirmation to proceed to Task 10
 - **Environment note:** Rust 1.98.1 installed via `winget install Rustlang.Rustup`. Cargo bin is
   `C:\Users\AaronBrataAditama\.cargo\bin`; `setx` added it to the user PATH for new sessions, but the
   *current* shell environment does not see it (harness shells don't source `.bash_profile` and don't
@@ -47,7 +45,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | 6 | Sub-agents | haiku | done | 1671c07 (merge 54f0f17) | had its own stub `tail.rs`/`transcript.rs` to compile in isolation; discarded in favor of Task 5's real versions during merge |
 | 7 | Credentials, plan, usage | **sonnet** (escalated from haiku) | done | ce8cac4 (merge 1da4dc0) | added `spend`-object parsing (preferred over `extra_usage`), verified via `tests/usage_fixtures.rs` against the real live fixture |
 | 8 | Status parser | haiku | done | efa02af (merge 6e64f91) | verified independently after merge |
-| 9 | fold(), latch, fixtures, golden | sonnet | in progress | | dispatched to sonnet sub-agent |
+| 9 | fold(), latch, fixtures, golden | sonnet | done | 92c9db6 | verified independently: 83 tests pass (incl. all 21 golden fixtures), clippy clean; trivial import-placement deviation (`SessionStatus` moved into the test module, matching `latch.rs`'s existing pattern, to satisfy clippy's unused-import gate) |
 | 10 | Tooltip + icon pixels | sonnet | todo | | pixel maths |
 | 11 | Settings, geometry, hover | haiku | todo | | |
 | 12 | Panel layout | sonnet | todo | | largest pure module |
