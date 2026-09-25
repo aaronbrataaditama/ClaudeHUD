@@ -15,7 +15,7 @@
 
 ---
 
-- [ ] **Step 1: Check for Rust; install it only with the user's permission**
+- [x] **Step 1: Check for Rust; install it only with the user's permission**
 
 Run: `cargo --version`
 If it prints a version ≥ 1.82 (needed for `Option::is_none_or`), skip to Step 2. If it is older, run `rustup update stable`.
@@ -31,7 +31,7 @@ cargo --version
 
 Expected: `cargo 1.8x.x` (or newer). The MSVC Build Tools and Windows SDK 10.0.26100 are already installed on this machine (VS 18 BuildTools); if linking fails with `link.exe not found`, tell the user to add the "Desktop development with C++" workload.
 
-- [ ] **Step 2: Toolchain pin and static CRT**
+- [x] **Step 2: Toolchain pin and static CRT**
 
 `rust-toolchain.toml`:
 
@@ -49,7 +49,7 @@ targets = ["x86_64-pc-windows-msvc"]
 rustflags = ["-C", "target-feature=+crt-static"]
 ```
 
-- [ ] **Step 3: `Cargo.toml`**
+- [x] **Step 3: `Cargo.toml`**
 
 ```toml
 [package]
@@ -111,7 +111,7 @@ panic = "abort"
 strip = true
 ```
 
-- [ ] **Step 4: Resources (manifest now; the icon is added in Task 14)**
+- [x] **Step 4: Resources (manifest now; the icon is added in Task 14)**
 
 `assets/claudehud.manifest`:
 
@@ -169,7 +169,7 @@ fn main() {
 
 If `embed_resource::NONE` or `.manifest_required()` do not exist in the resolved 3.x version, check `cargo doc -p embed-resource --open` and use the equivalent (older versions: `embed_resource::compile("assets/claudehud.rc", embed_resource::NONE);` with no result handling).
 
-- [ ] **Step 5: Entry points**
+- [x] **Step 5: Entry points**
 
 `src/lib.rs`:
 
@@ -192,7 +192,7 @@ fn main() {
 
 `windows_subsystem = "windows"` only applies to release builds, so `cargo run` (debug) keeps a console for `eprintln!` debugging.
 
-- [ ] **Step 6: Write the test helper and a failing test**
+- [x] **Step 6: Write the test helper and a failing test**
 
 `tests/common/mod.rs`:
 
@@ -261,12 +261,12 @@ fn temp_dir_writes_nested_files_and_cleans_up() {
 }
 ```
 
-- [ ] **Step 7: Run tests**
+- [x] **Step 7: Run tests**
 
 Run: `cargo test`
 Expected: first build downloads crates and compiles `windows` (1–3 min), then `test temp_dir_writes_nested_files_and_cleans_up ... ok`.
 
-- [ ] **Step 8: The check script**
+- [x] **Step 8: The check script**
 
 `scripts/check.ps1`:
 
@@ -300,12 +300,12 @@ Run: `powershell -ExecutionPolicy Bypass -File scripts/check.ps1`
 Expected: all five sections pass; last line `OK: target\release\claudehud.exe is ~150 KB`.
 If `cargo fmt --check` fails, run `cargo fmt` and re-run.
 
-- [ ] **Step 9: Verify the manifest is embedded**
+- [x] **Step 9: Verify the manifest is embedded**
 
 Run: `target\release\claudehud.exe` from PowerShell.
 Expected: nothing visible happens (release is a GUI-subsystem exe with no window yet) and it exits immediately. `cargo run` prints `claudehud 0.1.0`.
 
-- [ ] **Step 10: Commit** (the first commit also takes the existing docs)
+- [x] **Step 10: Commit** (the first commit also takes the existing docs)
 
 ```powershell
 git add .gitignore CLAUDE.md .claude/settings.json .claude/PROGRESS.md PLAN-CLAUDEHUD.md claudehud-mockup.html ClaudeHUD_icon.jpg docs/plans
