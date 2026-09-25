@@ -4,6 +4,8 @@
 pub mod credentials;
 pub mod registry;
 pub mod status;
+pub mod tail;
+pub mod transcript;
 pub mod usage;
 
 /// Windows tools often write a UTF-8 BOM; serde_json rejects it.
