@@ -10,15 +10,12 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Tasks 4-8 (in progress — dispatched together, each in its own isolated git
-  worktree, per the user's choice to parallelize).
-- **Next action:** when all 5 finish, merge each worktree branch into `main` (resolving the expected
-  one-line conflict in `src/collectors/mod.rs` — each task adds its own `pub mod` line, keep all of
-  them), verify the merged result builds and tests pass, report to user, wait for go-ahead before
-  Task 9.
-- **Branch:** `main` (4 commits: `17c3d0b`, `71bfe0c`, `f890b27`, `4a2870e`) + 5 pending worktree
-  branches for Tasks 4-8, not yet merged.
-- **Waiting on user:** nothing right now
+- **Current task:** Tasks 4-8 done and merged into `main`. Task 9 not started.
+- **Next action:** waiting on user go-ahead to start Task 9 (fold(), latch, fixtures, golden tests —
+  sonnet; the core colour rules).
+- **Branch:** `main` at `54f0f17`. All 5 worktrees and their branches have been cleaned up
+  (`git worktree remove` + `git branch -d`) — nothing left dangling.
+- **Waiting on user:** confirmation to proceed to Task 9
 - **Environment note:** Rust 1.98.1 installed via `winget install Rustlang.Rustup`. Cargo bin is
   `C:\Users\AaronBrataAditama\.cargo\bin`; `setx` added it to the user PATH for new sessions, but the
   *current* shell environment does not see it (harness shells don't source `.bash_profile` and don't
@@ -45,11 +42,11 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | 1 | Toolchain + scaffold | haiku | done | 17c3d0b, 71bfe0c | verified independently: tests pass, clippy clean, exe 208 KB |
 | 2 | Spike: waiting signal + usage shape | main session (scripts) + user (live checks) | done | f890b27 | decision: proceed as specified, with adjustments for Tasks 5 and 7 |
 | 3 | Model, time, format | sonnet | done | 4a2870e | verified independently: 20/20 tests pass, clippy clean; one deviation (`.is_multiple_of()` instead of `% 3 == 0`, clippy-forced, behavior identical) |
-| 4 | Registry collector | haiku | in progress | | running in parallel (isolated worktree) |
-| 5 | Transcript tail | haiku | in progress | | running in parallel (isolated worktree) |
-| 6 | Sub-agents | haiku | in progress | | running in parallel (isolated worktree) |
-| 7 | Credentials, plan, usage | **sonnet** (escalated from haiku) | in progress | | running in parallel (isolated worktree); escalated because it needs new `spend`-object parsing logic beyond the task file's verbatim code (see decisions log) |
-| 8 | Status parser | haiku | in progress | | running in parallel (isolated worktree) |
+| 4 | Registry collector | haiku | done | 3996fab (merge 75ec391) | verified independently after merge |
+| 5 | Transcript tail | haiku | done | 99a663f (merge 13dab9a) | verified independently after merge |
+| 6 | Sub-agents | haiku | done | 1671c07 (merge 54f0f17) | had its own stub `tail.rs`/`transcript.rs` to compile in isolation; discarded in favor of Task 5's real versions during merge |
+| 7 | Credentials, plan, usage | **sonnet** (escalated from haiku) | done | ce8cac4 (merge 1da4dc0) | added `spend`-object parsing (preferred over `extra_usage`), verified via `tests/usage_fixtures.rs` against the real live fixture |
+| 8 | Status parser | haiku | done | efa02af (merge 6e64f91) | verified independently after merge |
 | 9 | fold(), latch, fixtures, golden | sonnet | todo | | core colour rules |
 | 10 | Tooltip + icon pixels | sonnet | todo | | pixel maths |
 | 11 | Settings, geometry, hover | haiku | todo | | |
@@ -108,6 +105,23 @@ Newest last. Record anything a resumed session must know that is not already in 
   task file's verbatim `parse_spend` only reads `extra_usage`, but the Task 2 spike found a newer
   `spend` top-level object that should be preferred when present. Implementing that preference is new
   logic, not verbatim copying, so it needs the sonnet-tier judgment call.
+- 2026-09-25: Tasks 4-8 all finished and were merged into `main` in this order: 4 (registry) → 8
+  (status) → 7 (credentials/usage) → 5 (transcript) → 6 (subagents). Each merge after the first hit
+  an add/add conflict on `src/collectors/mod.rs` (every task created it independently in its own
+  isolated worktree) — resolved by combining all the `pub mod` lines. Task 6's own worktree also had
+  to invent stub `src/collectors/tail.rs`/`transcript.rs` files to compile without visibility into
+  Task 5's work; those stubs were discarded in favor of Task 5's real implementations during the
+  Task 6 merge (`git checkout --ours` on those two files). After all 5 merges: full `cargo test` (61
+  lib + 10 integration, all passing), `cargo clippy --all-targets -- -D warnings` and `cargo fmt
+  --check` all clean on the merged result. All 5 worktrees and their branches were then removed.
+- 2026-09-25: **Lesson for future parallel task batches**: when dispatching N tasks in parallel
+  worktrees that all modify the same shared file (e.g. `src/collectors/mod.rs`) or depend on each
+  other's new modules, each dispatch prompt must explicitly tell the sub-agent to (a) create any
+  shared scaffolding file itself with only its own task's addition (never assume an earlier parallel
+  task's output is visible), and (b) NOT invent stub versions of another parallel task's module if it
+  can be avoided — if a real dependency is missing, ask the coordinator rather than guessing, since
+  fabricated stubs create extra merge work. This was caught here (Task 6's stubs) but cost a full
+  round of correction messages plus manual `git checkout --ours` during merge.
 
 ## Blockers
 
