@@ -4,6 +4,14 @@
 
 **Spec:** §3.2 and the transcript fallback in §3.1.
 
+**Read `docs/spike-results.md` first.** The Task 2 live spike confirmed that plan-mode approval
+(`ExitPlanMode`) *never* writes `status: "waiting"` to the registry file, even when the prompt sits
+open for several seconds — this was checked twice against a real Claude Code 2.1.282 session, not a
+timing fluke. That makes this module's `ExitPlanMode` detection the **only** signal for plan-mode
+waiting, not a defensive fallback behind the registry. Add a specific test with a transcript fixture
+whose last line is a pending `ExitPlanMode` tool call (no matching `tool_result` yet), and be sure the
+detection logic here doesn't assume the registry will ever corroborate it.
+
 Real line shapes (observed on this machine; long values elided). Each line is one JSON object:
 
 ```json

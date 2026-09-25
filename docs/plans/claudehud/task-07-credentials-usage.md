@@ -4,6 +4,20 @@
 
 **Spec:** §3.4, §3.5. If `docs/spike-results.md` (Task 2) recorded a different usage shape, add a test for that shape here before implementing.
 
+**It did.** The live spike (`docs/spike-results.md`) found a zero-token-quota enterprise account
+where `limits[]` is empty and every named window is `null` — spend-only accounts are real, not a
+theoretical edge case. It also found a `spend` top-level object the plan didn't originally document:
+`{"used":{"amount_minor":9948,"currency":"USD","exponent":2},"limit":{"amount_minor":60000,"currency":"USD","exponent":2},"percent":17,"severity":"normal","enabled":true,...}`.
+This maps directly onto the `Spend` struct (`used.amount_minor` → `used_minor`, `limit.amount_minor`
+→ `limit_minor`, `currency`, `enabled`) and should be **preferred over `extra_usage` when both are
+present** — parse `spend` first, fall back to `extra_usage` only if `spend` is absent or null. The
+real fixture is saved at `fixtures/usage/live-20260925.json`; add it as a test case in
+`tests/usage_fixtures.rs` (this account's expected result: empty `limits`, all windows absent,
+`Spend { used_minor: 9948, limit_minor: Some(60000), currency: "USD", enabled: true }`). The response
+also has a long tail of null/codenamed top-level keys (e.g. `tangelo`, `nimbus_quill`) — confirm
+`parse_usage` ignores unknown top-level keys without error (already required by CLAUDE.md
+conventions, but this fixture is what actually exercises it).
+
 Known shapes:
 - Credentials: `{"claudeAiOauth":{"accessToken":"…","refreshToken":"…","expiresAt":1790323000000,"scopes":[…],"subscriptionType":"team","rateLimitTier":"default_claude_max_5x"}}`
 - Usage, named windows (what `C:\Projects\Personal\AIUsage\Platform\ClaudeUsage.cs` reads): `{"five_hour":{"utilization":61.0,"resets_at":"2026-09-25T14:32:00.123+00:00"},"seven_day":{"utilization":88.0,"resets_at":"…"},"seven_day_opus":null,…}`. `utilization` is a percentage 0–100.

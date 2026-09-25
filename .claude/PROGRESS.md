@@ -10,10 +10,10 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Task 1 (in progress — dispatched to haiku sub-agent)
-- **Next action:** review Task 1 sub-agent's work, then dispatch Task 2 (human-in-the-loop spike)
-- **Branch:** `main` (no commits yet; Task 1 makes the first commit)
-- **Waiting on user:** nothing right now
+- **Current task:** Task 2 done. Task 3 not started.
+- **Next action:** waiting on user go-ahead to start Task 3 (model.rs, timefmt.rs, format.rs — sonnet)
+- **Branch:** `main` (2 commits so far: `17c3d0b`, `71bfe0c`; Task 2's commit pending)
+- **Waiting on user:** confirmation to proceed to Task 3
 - **Environment note:** Rust 1.98.1 installed via `winget install Rustlang.Rustup`. Cargo bin is
   `C:\Users\AaronBrataAditama\.cargo\bin`; `setx` added it to the user PATH for new sessions, but the
   *current* shell environment does not see it (harness shells don't source `.bash_profile` and don't
@@ -37,8 +37,8 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 
 | # | Task | Implementer model | Status | Commit | Notes |
 |---|---|---|---|---|---|
-| 1 | Toolchain + scaffold | haiku | in progress | | Rust installed by main session; sub-agent doing Steps 2-10 |
-| 2 | Spike: waiting signal + usage shape | haiku (scripts) + main session with the user | todo | | **human-in-the-loop**, go/no-go gate |
+| 1 | Toolchain + scaffold | haiku | done | 17c3d0b, 71bfe0c | verified independently: tests pass, clippy clean, exe 208 KB |
+| 2 | Spike: waiting signal + usage shape | main session (scripts) + user (live checks) | done | (pending) | decision: proceed as specified, with adjustments for Tasks 5 and 7 |
 | 3 | Model, time, format | sonnet | todo | | |
 | 4 | Registry collector | haiku | todo | | |
 | 5 | Transcript tail | haiku | todo | | |
@@ -84,6 +84,18 @@ Newest last. Record anything a resumed session must know that is not already in 
 
 - 2026-09-25: App name is **ClaudeHUD** (renamed from Sidelight throughout).
 - 2026-09-25: Execution is subagent-driven; cheapest suitable model per task (see policy above).
+- 2026-09-25: User asked to be asked for confirmation after each task finishes, before the next one
+  starts. Do not auto-chain tasks.
+- 2026-09-25: Task 2 spike done live against Claude Code 2.1.282. Full results: `docs/spike-results.md`.
+  Key findings: permission prompts and `AskUserQuestion` both show `status=waiting` in the registry
+  and clear on answer; plan approval (`ExitPlanMode`) **never** does, confirmed with prompts held open
+  1-4s — so Task 5 (transcript tail) is the *only* signal for plan-mode waiting, not a defensive extra.
+  Live usage response (`enterprise` / `default_claude_zero`) had empty `limits[]` and all-null named
+  windows — a zero-token-quota, spend-only account shape the plan didn't anticipate — plus a new
+  `spend` top-level object (cleaner than `extra_usage`: has `percent`/`severity` directly) and a long
+  tail of null/codenamed keys to ignore. Task 7 must handle both quota-based and spend-based accounts
+  and prefer `spend` over `extra_usage` when both are present. Fixture saved at
+  `fixtures/usage/live-20260925.json` for Task 7's tests.
 
 ## Blockers
 
