@@ -21,7 +21,7 @@
 
 ## Part A: tooltip
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 `src/tooltip.rs`, tests only:
 
@@ -106,12 +106,12 @@ mod tests {
 
 Add `pub mod tooltip;` to `src/lib.rs`.
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `cargo test --lib tooltip::`
 Expected: compile errors.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Above the tests in `src/tooltip.rs`:
 
@@ -227,14 +227,14 @@ pub fn tooltip(light: &Light, snap: &Snapshot, local: &dyn Fn(i64) -> LocalTime)
 }
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `cargo test --lib tooltip::`
 Expected: 5 passed.
 
 ## Part B: icon and strip pixels
 
-- [ ] **Step 5: Write failing tests**
+- [x] **Step 5: Write failing tests**
 
 `src/icon.rs`, tests only:
 
@@ -312,12 +312,12 @@ mod tests {
 
 Add `pub mod icon;` to `src/lib.rs`.
 
-- [ ] **Step 6: Run to verify failure**
+- [x] **Step 6: Run to verify failure**
 
 Run: `cargo test --lib icon::`
 Expected: compile errors.
 
-- [ ] **Step 7: Implement**
+- [x] **Step 7: Implement**
 
 Above the tests in `src/icon.rs`:
 
@@ -442,12 +442,12 @@ pub fn render_strip(w: u32, h: u32, rgb: u32, alpha: f32) -> Vec<u8> {
 }
 ```
 
-- [ ] **Step 8: Run tests**
+- [x] **Step 8: Run tests**
 
 Run: `cargo test --lib icon::`
 Expected: 7 passed. If `badge_is_drawn_and_cuts_out_the_body` fails on pixel (10, 9), print that pixel's alpha and check the maths against §5.1 (badge radius 3.4/16, ring 1.1/16), not the test.
 
-- [ ] **Step 9: Lint and commit**
+- [x] **Step 9: Lint and commit**
 
 ```powershell
 cargo clippy --all-targets -- -D warnings
