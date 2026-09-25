@@ -37,7 +37,7 @@ Other `type` values seen and to be ignored: `mode`, `permission-mode`, `attachme
 
 ---
 
-- [ ] **Step 1: Write failing unit tests for `tail::complete_lines` and `parse_tail`**
+- [x] **Step 1: Write failing unit tests for `tail::complete_lines` and `parse_tail`**
 
 `src/collectors/tail.rs`, tests only for now:
 
@@ -155,12 +155,12 @@ mod tests {
 
 Add `pub mod tail;` and `pub mod transcript;` to `src/collectors/mod.rs`.
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `cargo test --lib collectors::`
 Expected: compile errors.
 
-- [ ] **Step 3: Implement `tail.rs`**
+- [x] **Step 3: Implement `tail.rs`**
 
 Above its tests:
 
@@ -205,7 +205,7 @@ pub fn complete_lines(text: &str, truncated_start: bool) -> impl Iterator<Item =
 }
 ```
 
-- [ ] **Step 4: Implement `transcript.rs`**
+- [x] **Step 4: Implement `transcript.rs`**
 
 Above its tests:
 
@@ -320,12 +320,12 @@ pub fn parse_tail(text: &str, truncated_start: bool) -> TranscriptFacts {
 }
 ```
 
-- [ ] **Step 5: Run unit tests**
+- [x] **Step 5: Run unit tests**
 
 Run: `cargo test --lib collectors::`
 Expected: 12 passed (1 tail + 11 transcript).
 
-- [ ] **Step 6: Write IO integration tests**
+- [x] **Step 6: Write IO integration tests**
 
 `tests/transcript_io.rs`:
 
@@ -373,12 +373,12 @@ fn finds_transcript_by_slug_then_by_scan() {
 }
 ```
 
-- [ ] **Step 7: Run it**
+- [x] **Step 7: Run it**
 
 Run: `cargo test --test transcript_io`
 Expected: 3 passed.
 
-- [ ] **Step 8: Lint and commit**
+- [x] **Step 8: Lint and commit**
 
 Run: `cargo clippy --all-targets -- -D warnings` and `cargo fmt`.
 
