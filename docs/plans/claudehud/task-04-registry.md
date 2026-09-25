@@ -29,7 +29,7 @@ If `docs/spike-results.md` (Task 2) says `procStart` differs from the real creat
 
 ---
 
-- [ ] **Step 1: Module skeleton**
+- [x] **Step 1: Module skeleton**
 
 `src/collectors/mod.rs`:
 
@@ -47,7 +47,7 @@ pub fn strip_bom(s: &str) -> &str {
 
 Add `pub mod collectors;` to `src/lib.rs`.
 
-- [ ] **Step 2: Write failing unit tests**
+- [x] **Step 2: Write failing unit tests**
 
 `src/collectors/registry.rs`, tests only:
 
@@ -140,12 +140,12 @@ mod tests {
 }
 ```
 
-- [ ] **Step 3: Run to verify it fails**
+- [x] **Step 3: Run to verify it fails**
 
 Run: `cargo test --lib collectors::registry`
 Expected: compile errors (items not defined).
 
-- [ ] **Step 4: Implement**
+- [x] **Step 4: Implement**
 
 Above the tests in `src/collectors/registry.rs`:
 
@@ -341,12 +341,12 @@ pub fn scan_dir(dir: &Path, probe: &dyn ProcessProbe) -> Result<RegistryScan, St
 }
 ```
 
-- [ ] **Step 5: Run unit tests**
+- [x] **Step 5: Run unit tests**
 
 Run: `cargo test --lib collectors::registry`
 Expected: 6 passed.
 
-- [ ] **Step 6: Write the directory-scan integration test**
+- [x] **Step 6: Write the directory-scan integration test**
 
 `tests/registry_scan.rs`:
 
@@ -399,12 +399,12 @@ fn classifies_live_dead_unreadable_and_ignores_keys() {
 }
 ```
 
-- [ ] **Step 7: Run it**
+- [x] **Step 7: Run it**
 
 Run: `cargo test --test registry_scan`
 Expected: 2 passed.
 
-- [ ] **Step 8: Lint and commit**
+- [x] **Step 8: Lint and commit**
 
 Run: `cargo clippy --all-targets -- -D warnings` and `cargo fmt`.
 
