@@ -10,13 +10,15 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Task 3 done. Task 4 not started.
-- **Next action:** waiting on user go-ahead to start Task 4 (registry collector — haiku). Note: Tasks
-  4-8 can run in parallel once Task 3 is done (each adds its own `pub mod` line to
-  `src/collectors/mod.rs`), and Task 14 (icon) can run alongside 3-13 too.
-- **Branch:** `main` (4 commits: `17c3d0b`, `71bfe0c`, `f890b27`, `4a2870e`)
-- **Waiting on user:** confirmation to proceed to Task 4 (and whether to parallelize 4-8 now or run
-  them one at a time)
+- **Current task:** Tasks 4-8 (in progress — dispatched together, each in its own isolated git
+  worktree, per the user's choice to parallelize).
+- **Next action:** when all 5 finish, merge each worktree branch into `main` (resolving the expected
+  one-line conflict in `src/collectors/mod.rs` — each task adds its own `pub mod` line, keep all of
+  them), verify the merged result builds and tests pass, report to user, wait for go-ahead before
+  Task 9.
+- **Branch:** `main` (4 commits: `17c3d0b`, `71bfe0c`, `f890b27`, `4a2870e`) + 5 pending worktree
+  branches for Tasks 4-8, not yet merged.
+- **Waiting on user:** nothing right now
 - **Environment note:** Rust 1.98.1 installed via `winget install Rustlang.Rustup`. Cargo bin is
   `C:\Users\AaronBrataAditama\.cargo\bin`; `setx` added it to the user PATH for new sessions, but the
   *current* shell environment does not see it (harness shells don't source `.bash_profile` and don't
@@ -43,11 +45,11 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | 1 | Toolchain + scaffold | haiku | done | 17c3d0b, 71bfe0c | verified independently: tests pass, clippy clean, exe 208 KB |
 | 2 | Spike: waiting signal + usage shape | main session (scripts) + user (live checks) | done | f890b27 | decision: proceed as specified, with adjustments for Tasks 5 and 7 |
 | 3 | Model, time, format | sonnet | done | 4a2870e | verified independently: 20/20 tests pass, clippy clean; one deviation (`.is_multiple_of()` instead of `% 3 == 0`, clippy-forced, behavior identical) |
-| 4 | Registry collector | haiku | todo | | |
-| 5 | Transcript tail | haiku | todo | | |
-| 6 | Sub-agents | haiku | todo | | |
-| 7 | Credentials, plan, usage | haiku | todo | | add a test for the spike's real usage shape if it differs |
-| 8 | Status parser | haiku | todo | | |
+| 4 | Registry collector | haiku | in progress | | running in parallel (isolated worktree) |
+| 5 | Transcript tail | haiku | in progress | | running in parallel (isolated worktree) |
+| 6 | Sub-agents | haiku | in progress | | running in parallel (isolated worktree) |
+| 7 | Credentials, plan, usage | **sonnet** (escalated from haiku) | in progress | | running in parallel (isolated worktree); escalated because it needs new `spend`-object parsing logic beyond the task file's verbatim code (see decisions log) |
+| 8 | Status parser | haiku | in progress | | running in parallel (isolated worktree) |
 | 9 | fold(), latch, fixtures, golden | sonnet | todo | | core colour rules |
 | 10 | Tooltip + icon pixels | sonnet | todo | | pixel maths |
 | 11 | Settings, geometry, hover | haiku | todo | | |
@@ -99,6 +101,13 @@ Newest last. Record anything a resumed session must know that is not already in 
   tail of null/codenamed keys to ignore. Task 7 must handle both quota-based and spend-based accounts
   and prefer `spend` over `extra_usage` when both are present. Fixture saved at
   `fixtures/usage/live-20260925.json` for Task 7's tests.
+- 2026-09-25: User chose to run Tasks 4-8 in parallel. Each dispatched in an isolated git worktree
+  (`Agent` tool `isolation: "worktree"`) to avoid concurrent writes to `src/collectors/mod.rs`; the
+  coordinator merges all 5 branches into `main` afterward.
+- 2026-09-25: Task 7 escalated from haiku to sonnet before starting (not a failure-escalation): the
+  task file's verbatim `parse_spend` only reads `extra_usage`, but the Task 2 spike found a newer
+  `spend` top-level object that should be preferred when present. Implementing that preference is new
+  logic, not verbatim copying, so it needs the sonnet-tier judgment call.
 
 ## Blockers
 
