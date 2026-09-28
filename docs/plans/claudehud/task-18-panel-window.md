@@ -17,7 +17,7 @@ Read the README's **Notes for implementers** first. Direct2D/DirectWrite signatu
 
 ---
 
-- [ ] **Step 1: The renderer**
+- [x] **Step 1: The renderer**
 
 `src/platform/render.rs`:
 
@@ -418,7 +418,7 @@ impl Measure for DwMeasure<'_> {
 
 Add `pub mod render;` to `src/platform/mod.rs`.
 
-- [ ] **Step 2: Replace `src/platform/app.rs`**
+- [x] **Step 2: Replace `src/platform/app.rs`**
 
 New compared with Task 17: `hinst`, the `panel` window and its class, `renderer`, `hover`/`view`/`layout`/`anim` state, `COM` initialisation, strip and panel mouse handling, `dispatch()`, the close and animation timers, tray left-click, and a panel redraw on every refresh while it is visible.
 
@@ -970,11 +970,11 @@ extern "system" fn panel_proc(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM) -> L
 
 `Option::is_none_or` needs Rust 1.82+. On an older toolchain write `self.collector.usage_age_ms(now).map_or(true, |age| age > STALE_USAGE_MS)`.
 
-- [ ] **Step 3: Build**
+- [x] **Step 3: Build**
 
 Run: `cargo build --release` and `cargo clippy --all-targets -- -D warnings`. Fix signature-level errors as described at the top.
 
-- [ ] **Step 4: Verify with a fixture, against the mockup**
+- [x] **Step 4: Verify with a fixture, against the mockup**
 
 Create `fixtures/manual/team_mockup.json`, a fixture that matches mockup section 1 (three sessions, three sub-agents, three limits, status operational):
 
@@ -1019,11 +1019,13 @@ Capture it for your own check: `scripts\screenshot.ps1 -Region panel` (with the 
 
 Also run once with `$env:CLAUDEHUD_FIXTURE = (Resolve-Path fixtures\snapshots\red_quota_spent.json).Path` and pin the panel. It should show the red banner "Weekly limit spent. New turns will fail until …".
 
-- [ ] **Step 5: Verify live**
+- [x] **Step 5: Verify live** (partial — safe part only)
 
-Clear the fixture, start the exe, and hover the strip while this Claude Code session works. This session should be listed as "Working · Nm" with its model and last-turn tokens. If this task spawned sub-agents they appear under it. Crash acknowledgement: kill a busy session (red strip), hover to open the panel, then close it. The crash row was visible while the panel was open and the strip returns to its normal colour afterwards.
+Clear the fixture, start the exe, and hover the strip while this Claude Code session works. This session should be listed as "Working · Nm" with its model and last-turn tokens. If this task spawned sub-agents they appear under it. Done: the live session (`claudehud-7e`) rendered as "Working · 3h 05m", Sonnet 5, last-turn tokens, with this very Task 18 sub-agent listed underneath as a running sub-agent.
 
-- [ ] **Step 6: Commit**
+Crash acknowledgement: kill a busy session (red strip), hover to open the panel, then close it. The crash row was visible while the panel was open and the strip returns to its normal colour afterwards. **Deliberately not done by this implementer** — killing another session's process is out of scope for a sub-agent and was deferred to the coordinator and user to do together; already tracked as item 7 in `docs/manual-qa-pending.md` ("From Task 18 (hover panel)"). Not duplicated here.
+
+- [x] **Step 6: Commit**
 
 ```powershell
 cargo fmt

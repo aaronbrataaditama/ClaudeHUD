@@ -1,0 +1,16 @@
+{"plan":"Team · Max 5x","warn_percent":85,
+ "sessions":[
+  {"pid":1,"session_id":"portal","name":"portal-service","cwd":"C:\\Projects\\Work\\portal-service","status":"waiting","waiting_for":"approve the permission prompt","started_at_ms":-2400000,"status_updated_at_ms":-20000,"transcript":{"model":"claude-opus-5","last_turn_input_tokens":84200}},
+  {"pid":2,"session_id":"hud","name":"claudehud-a4","cwd":"C:\\Projects\\Personal\\ClaudeHUD","status":"busy","started_at_ms":-720000,"status_updated_at_ms":-60000,
+   "transcript":{"model":"claude-opus-5","last_turn_input_tokens":132600},
+   "subagents":[
+     {"agent_id":"a","agent_type":"general-purpose","description":"Draft hover state machine tests","depth":1,"state":"running","started_ms":-185000,"context_tokens":41900},
+     {"agent_id":"b","agent_type":"Explore","description":"Locate WinHTTP proxy handling","depth":1,"state":"running","started_ms":-72000,"context_tokens":18400},
+     {"agent_id":"c","agent_type":"Explore","description":"Find per-monitor DPI examples","depth":1,"state":"done","started_ms":-300000,"ended_ms":-252000,"context_tokens":9100}]},
+  {"pid":3,"session_id":"docs","name":"docs-site","cwd":"C:\\Projects\\Personal\\docs-site\\packages\\website","status":"idle","started_at_ms":-5400000,"status_updated_at_ms":-180000,"transcript":{"model":"claude-sonnet-5","last_turn_input_tokens":22100,"compacted":true}}],
+ "usage":{"value":{"limits":[
+   {"key":"five_hour","label":"Current session · 5h","pct":61,"resets_at":16320},
+   {"key":"seven_day","label":"Weekly · all models","pct":88,"resets_at":257000},
+   {"key":"seven_day_opus","label":"Weekly · Opus","pct":42,"resets_at":257000}]}},
+ "status":{"value":{"description":"All Systems Operational","checked_at_ms":-120000,"components":[
+   {"name":"Claude Code","state":"operational"},{"name":"Claude API (api.anthropic.com)","state":"operational"},{"name":"claude.ai","state":"operational"}]}}}

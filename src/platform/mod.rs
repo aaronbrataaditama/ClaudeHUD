@@ -6,6 +6,7 @@ pub mod layered;
 pub mod localtime;
 pub mod monitors;
 pub mod process;
+pub mod render;
 pub mod system;
 pub mod tray;
 pub mod wide;
