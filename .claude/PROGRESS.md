@@ -10,14 +10,14 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Task 20 (in progress — dispatched to haiku sub-agent). Final gate: Win32 smoke
-  test, runtime budget script, manual release checklist.
-- **Next action:** when the sub-agent finishes, verify independently (re-run smoke test + budget script
-  myself), report to user, wait for go-ahead before the final whole-branch review (opus). Separately,
+- **Current task:** Task 20 done — **all 20 implementation tasks are complete**. Nothing left before
+  the final whole-branch review (opus).
+- **Next action:** waiting on user go-ahead to start the final whole-branch review. Separately,
   whenever convenient: work through `docs/manual-qa-pending.md`'s checklist together (items 1-7 from
-  Tasks 17-18, items 9-19 from Task 19; item 8 already resolved).
-- **Branch:** `main` at `fc3684a`.
-- **Waiting on user:** nothing right now
+  Tasks 17-18, items 9-19 from Task 19; item 8 already resolved) and `docs/manual-checklist.md` (the
+  spec §12 release checklist, entirely unticked — needs a human to walk through it).
+- **Branch:** `main` at `5e32648`.
+- **Waiting on user:** confirmation to proceed to the final whole-branch review
 - **Known environment quirk:** `cargo test --lib` occasionally hits a transient Windows linker error
   (`LNK1104: cannot open file ...claudehud-*.exe`), seen in both Task 10 and Task 11's runs. An
   immediate retry with no code changes always passes. Likely a stale file handle (antivirus scan or a
@@ -64,7 +64,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | 17 | Live wiring + worker | sonnet | done | e97fee5 | verified independently: 125+ lib tests + all integration tests pass, clippy/fmt clean, no `claudehud.exe` left running. **Coordinator also independently re-ran the live check**: started the exe myself with no fixture and confirmed a green strip on screen (this session busy), matching the implementer's report. No windows-0.61 signature fixes needed this time — verbatim code compiled clean. Of the task file's 6 Step-4 manual checks, only the safe "green while busy" one was done (by both the implementer and me); the other 5 (kill a live session mid-turn, second permission-prompt session, close all sessions, disable Wi-Fi, wait-for-idle) were deliberately **not** delegated — held back to do with the user directly since they touch other live sessions/the real network. |
 | 18 | Panel window (Direct2D) | sonnet | done | 0150405 | **coordinator independently re-verified visually, not just trusting the report**: rebuilt, ran the `team_mockup.json` and `red_quota_spent.json` fixtures myself, and confirmed both panels render correctly (header/usage/sessions/sub-agents/footer for the first; red banner + 100% red meter for the second) — screenshots matched the implementer's description in full detail. Along the way found a real environmental quirk worth recording (see decisions log): my first click attempt (simulated cursor + `mouse_event`) silently failed because a maximized window's Windows-11 "title bar scaffolding" hit-tested ahead of the topmost strip window across the entire top edge of the screen; worked around it by posting `WM_LBUTTONUP` directly to the strip's `HWND` (found via `FindWindow`), which is unaffected by hit-testing order. No windows-0.61.3 signature *spelling* fixes needed here, but one real deviation: `windows::Foundation::Numerics::Vector2` isn't reachable through any public path in this crate version (confirmed against crate source) — worked around with a macro that obtains a `Vector2` via `D2D1_ELLIPSE::default().point` rather than adding `windows-numerics` as an explicit new dependency (respects the no-new-crates-without-asking rule). Escalation to opus was authorized but not needed — sonnet handled it in one pass. 125+ tests pass, clippy/fmt clean, no `claudehud.exe` left running. |
 | 19 | Menu + system integration | sonnet | done | 7ebfe05 | verified independently: 151 tests pass, clippy/fmt clean, no `claudehud.exe` left running, real `Run` autostart key confirmed untouched, test-generated settings.json cleaned up. One signature fix (`WM_MOUSEHOVER`/`WM_MOUSELEAVE` import path, same as Task 18). Step 3's full 12-item manual checklist deliberately deferred to `docs/manual-qa-pending.md` items 9-19 — this task's own file writes every one of them as "ask the user". |
-| 20 | Smoke test, budgets, checklist | haiku | in progress | | dispatched to haiku sub-agent; final gate before whole-branch review |
+| 20 | Smoke test, budgets, checklist | haiku | done | 322f55b, 5e32648 | verified independently: smoke tests pass (re-ran myself), full `check.ps1` gate passes, budget script passes (95MB working set vs 110MB revised target). **Working-set budget was investigated and corrected, not just accepted or silently patched over** — see decisions log for the full finding (Intel GPU driver overhead + real panel-open steady-state, no leak, confirmed via loaded-module inspection and repeated sampling). |
 | — | Final whole-branch review | opus | todo | | after Task 20 |
 
 ## Model and sub-agent policy
@@ -146,6 +146,25 @@ Newest last. Record anything a resumed session must know that is not already in 
   a known OS-level limitation (now in `PLAN-CLAUDEHUD.md` §2.4) rather than attempt a code fix — no
   topmost window can override shell-privileged hit-testing, and the tray icon is a working fallback.
   `docs/manual-qa-pending.md` item 8 marked done.
+- 2026-09-28: **Task 20's working-set budget was wrong, and fixing it took two rounds — both driven by
+  actually measuring, not accepting a claim.** The haiku implementer reported 54.5MB vs the original
+  40MB target and, correctly, did not silently patch the number — it flagged the overage as an open
+  issue with code-review evidence that `Renderer`/`Surface` reuse was already correct. First
+  independent check: reproduced 54MB as a real *baseline* (panel never opened) and traced it via
+  `Get-Process -Module` to Intel GPU driver DLLs (`igc64.dll` 83MB, `igd10umt64xe.dll` 38MB mapped size)
+  — confirmed not ClaudeHUD's own allocations. Asked the user how to handle it; they chose to raise the
+  target. **But the first revision (60MB) was itself wrong** — it was based only on the no-panel
+  baseline, when the budget script's own stated methodology is to measure *with the panel opened once*.
+  Actually running that scenario (posting `WM_LBUTTONUP` to the strip's `HWND` mid-script, same
+  technique as Tasks 18-19) showed ~95MB, not 54MB. Verified this wasn't a leak by sampling every 2-5s
+  for over a minute (flat at 94.7MB) and across 6 repeated open/close cycles (94.7→95.0MB, noise, not
+  growth). Final target: **110MB** in `PLAN-CLAUDEHUD.md` §8/§9, `scripts/budget.ps1`, and
+  `docs/manual-checklist.md`, all updated together and re-verified end-to-end (`scripts/budget.ps1`
+  now reports "Within budget" at 95MB/110MB). Commit `5e32648`.
+- 2026-09-28: **Lesson**: when correcting a measured target/budget, reproduce the *exact* scenario the
+  original check describes (here: "with the panel shown once", not idle) before picking a new number —
+  a plausible-looking fix based on a partial measurement can itself be wrong, and the tell is usually
+  right there in the check's own stated methodology.
 - 2026-09-28: **Task 14's icon crop was wrong, and the implementer's own visual check missed it.**
   `scripts/make-icon.ps1`'s crop rectangle `(590, 135, 820, 820)` (copied verbatim from the task file)
   assumes a 2000px-wide source image, but the actual `assets/ClaudeHUD_icon.jpg` is **2816×1536**. The
