@@ -10,14 +10,14 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Task 19 done — the app is now feature-complete per the plan (menu, settings,
-  display/power/lock/fullscreen handling, autostart). Task 20 not started.
-- **Next action:** waiting on user go-ahead to start Task 20 (smoke test, budgets, checklist — haiku;
-  the final implementation gate before the whole-branch review). Separately, whenever convenient: work
-  through `docs/manual-qa-pending.md`'s checklist together (items 1-7 from Tasks 17-18, items 9-19 from
-  Task 19; item 8 already resolved).
-- **Branch:** `main` at `7ebfe05`.
-- **Waiting on user:** confirmation to proceed to Task 20
+- **Current task:** Task 20 (in progress — dispatched to haiku sub-agent). Final gate: Win32 smoke
+  test, runtime budget script, manual release checklist.
+- **Next action:** when the sub-agent finishes, verify independently (re-run smoke test + budget script
+  myself), report to user, wait for go-ahead before the final whole-branch review (opus). Separately,
+  whenever convenient: work through `docs/manual-qa-pending.md`'s checklist together (items 1-7 from
+  Tasks 17-18, items 9-19 from Task 19; item 8 already resolved).
+- **Branch:** `main` at `fc3684a`.
+- **Waiting on user:** nothing right now
 - **Known environment quirk:** `cargo test --lib` occasionally hits a transient Windows linker error
   (`LNK1104: cannot open file ...claudehud-*.exe`), seen in both Task 10 and Task 11's runs. An
   immediate retry with no code changes always passes. Likely a stale file handle (antivirus scan or a
@@ -64,7 +64,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | 17 | Live wiring + worker | sonnet | done | e97fee5 | verified independently: 125+ lib tests + all integration tests pass, clippy/fmt clean, no `claudehud.exe` left running. **Coordinator also independently re-ran the live check**: started the exe myself with no fixture and confirmed a green strip on screen (this session busy), matching the implementer's report. No windows-0.61 signature fixes needed this time — verbatim code compiled clean. Of the task file's 6 Step-4 manual checks, only the safe "green while busy" one was done (by both the implementer and me); the other 5 (kill a live session mid-turn, second permission-prompt session, close all sessions, disable Wi-Fi, wait-for-idle) were deliberately **not** delegated — held back to do with the user directly since they touch other live sessions/the real network. |
 | 18 | Panel window (Direct2D) | sonnet | done | 0150405 | **coordinator independently re-verified visually, not just trusting the report**: rebuilt, ran the `team_mockup.json` and `red_quota_spent.json` fixtures myself, and confirmed both panels render correctly (header/usage/sessions/sub-agents/footer for the first; red banner + 100% red meter for the second) — screenshots matched the implementer's description in full detail. Along the way found a real environmental quirk worth recording (see decisions log): my first click attempt (simulated cursor + `mouse_event`) silently failed because a maximized window's Windows-11 "title bar scaffolding" hit-tested ahead of the topmost strip window across the entire top edge of the screen; worked around it by posting `WM_LBUTTONUP` directly to the strip's `HWND` (found via `FindWindow`), which is unaffected by hit-testing order. No windows-0.61.3 signature *spelling* fixes needed here, but one real deviation: `windows::Foundation::Numerics::Vector2` isn't reachable through any public path in this crate version (confirmed against crate source) — worked around with a macro that obtains a `Vector2` via `D2D1_ELLIPSE::default().point` rather than adding `windows-numerics` as an explicit new dependency (respects the no-new-crates-without-asking rule). Escalation to opus was authorized but not needed — sonnet handled it in one pass. 125+ tests pass, clippy/fmt clean, no `claudehud.exe` left running. |
 | 19 | Menu + system integration | sonnet | done | 7ebfe05 | verified independently: 151 tests pass, clippy/fmt clean, no `claudehud.exe` left running, real `Run` autostart key confirmed untouched, test-generated settings.json cleaned up. One signature fix (`WM_MOUSEHOVER`/`WM_MOUSELEAVE` import path, same as Task 18). Step 3's full 12-item manual checklist deliberately deferred to `docs/manual-qa-pending.md` items 9-19 — this task's own file writes every one of them as "ask the user". |
-| 20 | Smoke test, budgets, checklist | haiku | todo | | final gate |
+| 20 | Smoke test, budgets, checklist | haiku | in progress | | dispatched to haiku sub-agent; final gate before whole-branch review |
 | — | Final whole-branch review | opus | todo | | after Task 20 |
 
 ## Model and sub-agent policy
