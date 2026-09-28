@@ -10,9 +10,12 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Task 14 (done). Icon generated and embedded; exe icon verified correct.
-- **Next action:** wait for user go-ahead before Task 15 (Platform services, Win32).
-- **Branch:** `main` at `89ea91d`.
+- **Current task:** Task 14 **reopened** — independent review found the icon crop is wrong (see Tasks
+  table and decisions log). Fixing now.
+- **Next action:** dispatch a fix-it sub-agent to correct the crop rectangle in
+  `scripts/make-icon.ps1`, regenerate `assets/claudehud.ico`, and commit. Then re-verify visually
+  myself again before marking Task 14 done and reporting to the user.
+- **Branch:** `main` at `89ea91d` (bad icon crop still committed here; fix is a new commit on top).
 - **Waiting on user:** nothing right now
 - **Known environment quirk:** `cargo test --lib` occasionally hits a transient Windows linker error
   (`LNK1104: cannot open file ...claudehud-*.exe`), seen in both Task 10 and Task 11's runs. An
@@ -54,7 +57,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | 11 | Settings, geometry, hover | haiku | done | 407a6ae | verified independently: 105 lib tests + all integration tests pass, clippy and fmt clean; no code deviations (only cargo fmt line-wrapping) |
 | 12 | Panel layout | sonnet | done | c360f3a | verified independently: 117 lib tests (incl. all 12 panel tests) + all integration tests pass, clippy clean; trivial `#[cfg(test)]`-gated import addition, same pattern as Tasks 10/11 |
 | 13 | Collector + fetch + schedule | sonnet | done | 644814a | verified independently: 143 tests total pass (incl. all 12 collect tests, both flagged-tricky ones), clippy and fmt clean; trivial `#[allow(clippy::type_complexity)]` on a test-fake field, same pattern as prior tasks |
-| 14 | App icon asset | haiku | done | 89ea91d | verified independently: icon generator succeeds (187KB, 8 frames), 256px shows orbits/creature with rounded corners/no fringe, 16px shows gradient tile with creature/eyes, exe icon correct, 117 lib tests pass, release exe 388KB under budget |
+| 14 | App icon asset | haiku | **reopened** | 89ea91d (bad crop) | sub-agent's own visual check was wrong — see decisions log. Fix in progress. |
 | 15 | Platform services (Win32) | sonnet | todo | | compile-driven signature fixes |
 | 16 | Strip + tray + loop | sonnet | todo | | first visible milestone; user checks the screen |
 | 17 | Live wiring + worker | sonnet | todo | | user checks against real sessions |
@@ -124,6 +127,20 @@ Newest last. Record anything a resumed session must know that is not already in 
   can be avoided — if a real dependency is missing, ask the coordinator rather than guessing, since
   fabricated stubs create extra merge work. This was caught here (Task 6's stubs) but cost a full
   round of correction messages plus manual `git checkout --ours` during merge.
+- 2026-09-28: **Task 14's icon crop was wrong, and the implementer's own visual check missed it.**
+  `scripts/make-icon.ps1`'s crop rectangle `(590, 135, 820, 820)` (copied verbatim from the task file)
+  assumes a 2000px-wide source image, but the actual `assets/ClaudeHUD_icon.jpg` is **2816×1536**. The
+  mismatch (~1.408x) cropped mostly blank canvas plus a corner of the tile, cutting off most of the
+  creature and 3 of the 4 orbiting spheres. The haiku implementer reported "no fringe, looks correct"
+  for this — its own visual check either wasn't done carefully or wasn't compared against the source
+  artwork. The coordinator caught this only by independently re-extracting and viewing the frames
+  during review. Corrected rectangle (scaled by 2816/2000 = 1.408): `(831, 190, 1155, 1155)` —
+  verified by test-cropping and viewing before committing to the fix.
+- 2026-09-28: **Lesson for future visual-check tasks**: when a task's acceptance criteria include "view
+  the output and confirm it looks right," don't take the sub-agent's description at face value —
+  independently re-derive and view the artifact yourself (or in a fresh reviewer pass) before marking
+  the task done, the same way code output gets independently re-run. A sub-agent's "I looked and it's
+  fine" is a claim, not evidence, exactly like its test-pass claims.
 
 ## Blockers
 
