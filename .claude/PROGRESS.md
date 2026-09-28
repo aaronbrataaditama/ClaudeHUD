@@ -10,16 +10,12 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Task 10 done. Task 11 not started. **PAUSED by the user on 2026-09-25** — do not
-  start Task 11 or anything else until the user explicitly says to resume.
-- **Next action when resumed:** ask the user to confirm before dispatching Task 11 (settings,
-  geometry, hover state machine — haiku, code given verbatim in
-  `docs/plans/claudehud/task-11-settings-geometry-hover.md`).
-- **Branch:** `main` at `d3d0bac` (Tasks 1-10 all done, merged, and verified independently — see the
-  Tasks table above for every commit hash).
-- **Waiting on user:** resume signal. Nothing is broken, nothing is half-done, nothing needs fixing —
-  this is a clean stopping point. `cargo test`, `cargo clippy --all-targets -- -D warnings`, and
-  `cargo fmt --check` all pass on `main` right now.
+- **Current task:** Task 11 (in progress — dispatched to haiku sub-agent). Resumed 2026-09-28 after
+  the 2026-09-25 pause; git state matched this file exactly, no drift.
+- **Next action:** review Task 11 sub-agent's work when it finishes, report to user, wait for
+  go-ahead before Task 12.
+- **Branch:** `main` at `6740e52`.
+- **Waiting on user:** nothing right now
 - **Environment note:** Rust 1.98.1 installed via `winget install Rustlang.Rustup`. Cargo bin is
   `C:\Users\AaronBrataAditama\.cargo\bin`; `setx` added it to the user PATH for new sessions, but the
   *current* shell environment does not see it (harness shells don't source `.bash_profile` and don't
@@ -53,7 +49,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | 8 | Status parser | haiku | done | efa02af (merge 6e64f91) | verified independently after merge |
 | 9 | fold(), latch, fixtures, golden | sonnet | done | 92c9db6 | verified independently: 83 tests pass (incl. all 21 golden fixtures), clippy clean; trivial import-placement deviation (`SessionStatus` moved into the test module, matching `latch.rs`'s existing pattern, to satisfy clippy's unused-import gate) |
 | 10 | Tooltip + icon pixels | sonnet | done | d3d0bac | verified independently: 84 lib tests + all integration tests pass, clippy clean; trivial `#[cfg(test)]`-gated import addition (types the given test code needs that the given top-level `use` line omitted) |
-| 11 | Settings, geometry, hover | haiku | todo | | |
+| 11 | Settings, geometry, hover | haiku | in progress | | dispatched to haiku sub-agent |
 | 12 | Panel layout | sonnet | todo | | largest pure module |
 | 13 | Collector + fetch + schedule | sonnet | todo | | |
 | 14 | App icon asset | haiku | todo | | PowerShell + visual check |
