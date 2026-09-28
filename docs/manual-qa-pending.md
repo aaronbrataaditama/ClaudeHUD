@@ -41,3 +41,14 @@ Start-Process target\release\claudehud.exe
 
 Remember to exit `claudehud.exe` (tray → Exit, or `taskkill /F /IM claudehud.exe`) after each check that
 starts it, so it doesn't hold the single-instance mutex for later runs.
+
+## From Task 18 (hover panel)
+
+- [ ] **7. Crash acknowledgement via the panel.** Kill a busy session's terminal window mid-turn (same
+  technique as check 5 above) so the strip turns red. Hover the strip to open the panel — the crashed
+  session's row should be visible while the panel is open, showing "Crashed mid-turn". Close the panel
+  (move away and wait for the close timer, or click elsewhere). The strip should return to its normal
+  (non-crashed) colour afterward — the crash acknowledges when the panel **closes**, not when it opens
+  (a deliberate deviation from the spec's literal wording, recorded in `PLAN-CLAUDEHUD.md`/task notes:
+  closing rather than opening means the crash row doesn't vanish while the user is still reading it).
+

@@ -10,14 +10,17 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Task 17 done — ClaudeHUD now runs on real Claude Code sessions, not just fixtures.
-  Task 18 not started yet.
-- **Next action:** read `docs/plans/claudehud/task-18-panel-window.md`, mark it in progress, dispatch
-  to sonnet (escalate to opus if stuck — this is the hardest Win32 task, the Direct2D panel window
-  checked against the mockup). Separately (not blocking): the 6 deferred manual QA checks from Task 17
-  are written up in `docs/manual-qa-pending.md` — do them with the user whenever convenient, and fold
-  them into Task 20's final `docs/manual-checklist.md`.
-- **Branch:** `main` at `3ba0dc1` (+ the new `docs/manual-qa-pending.md`, committed separately).
+- **Current task:** Task 18 (in progress — dispatched to sonnet sub-agent, escalate to opus if it fails
+  twice). The hardest Win32 task: Direct2D/DirectWrite panel renderer, hover-driven slide animation,
+  pin/tooltip/expand/scroll — checked against the mockup.
+- **Next action:** when the sub-agent finishes, independently re-verify visually myself (run the given
+  `fixtures/manual/team_mockup.json` fixture, screenshot the panel, view it next to
+  `claudehud-mockup.html` section 1) before trusting the report — same standard as Tasks 14/16/17. One
+  of Step 5's live checks ("kill a busy session, red strip, panel shows crash row") touches other live
+  sessions — scoped out of the sub-agent's delegation the same way as Task 17, deferred to
+  `docs/manual-qa-pending.md` for the coordinator/user to do together. Report to user, wait for
+  go-ahead before Task 19.
+- **Branch:** `main` at `5c18db9`.
 - **Waiting on user:** nothing right now
 - **Known environment quirk:** `cargo test --lib` occasionally hits a transient Windows linker error
   (`LNK1104: cannot open file ...claudehud-*.exe`), seen in both Task 10 and Task 11's runs. An
@@ -63,7 +66,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | 15 | Platform services (Win32) | sonnet | done | 3a9558e | verified independently: 125 lib tests (1 ignored) + all integration tests pass, clippy/fmt clean, live WinHTTP status test passed, scratch registry key confirmed gone, real Run autostart key confirmed untouched. No real deviations — the task file's two flagged windows-0.61 API changes (`from_win32`→`from_thread`, `WinHttpOpenRequest`'s accept-types param) turned out not to apply to the pinned 0.61.3; the verbatim code compiled clean on the first try. |
 | 16 | Strip + tray + loop | sonnet | done | 4237a26 | **coordinator independently re-ran the app and took my own screenshots**, not just trusting the sub-agent's report: started `claudehud.exe` myself with the yellow-waiting fixture and confirmed a yellow strip at the top of the screen; edited the fixture live (waiting→idle) and confirmed the strip changed to amber within ~2s (matches `QuotaWarn` outranking `Working` once the yellow reason clears, since this fixture's usage is already at 92%); restored the fixture via `git checkout`; force-killed the process and confirmed no `claudehud.exe` left running. Did not personally reproduce the tray-icon screenshot (it defaults to the taskbar overflow, which the task file itself treats as expected, not a failure) — accepted the implementer's UI-Automation-based verification for that part (it matched the icon's accessible Name to the exact expected tooltip string and confirmed badge color by pixel-sampling a zoomed capture). Two clippy-driven deviations (`chunks_exact_mut`→`as_chunks_mut`, one `#[allow(clippy::manual_dangling_ptr)]` with a comment explaining why the suggested fix would break `MAKEINTRESOURCEW(1)` icon loading) and one `scripts/screenshot.ps1` fix (`CopyFromScreen` with `CaptureBlt` throws on this machine — a documented .NET limitation — replaced with a direct `BitBlt` P/Invoke). 125+ tests still pass, clippy/fmt clean. |
 | 17 | Live wiring + worker | sonnet | done | e97fee5 | verified independently: 125+ lib tests + all integration tests pass, clippy/fmt clean, no `claudehud.exe` left running. **Coordinator also independently re-ran the live check**: started the exe myself with no fixture and confirmed a green strip on screen (this session busy), matching the implementer's report. No windows-0.61 signature fixes needed this time — verbatim code compiled clean. Of the task file's 6 Step-4 manual checks, only the safe "green while busy" one was done (by both the implementer and me); the other 5 (kill a live session mid-turn, second permission-prompt session, close all sessions, disable Wi-Fi, wait-for-idle) were deliberately **not** delegated — held back to do with the user directly since they touch other live sessions/the real network. |
-| 18 | Panel window (Direct2D) | sonnet (escalate to opus if stuck) | todo | | hardest Win32 task; user checks against the mockup |
+| 18 | Panel window (Direct2D) | sonnet (escalate to opus if stuck) | in progress | | dispatched to sonnet sub-agent; hardest Win32 task |
 | 19 | Menu + system integration | sonnet | todo | | user runs the checklist in Step 3 |
 | 20 | Smoke test, budgets, checklist | haiku | todo | | final gate |
 | — | Final whole-branch review | opus | todo | | after Task 20 |
