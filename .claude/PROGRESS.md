@@ -10,12 +10,12 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Task 13 done. Task 14 not started.
-- **Next action:** waiting on user go-ahead to start Task 14 (app icon asset — haiku; PowerShell +
-  visual check. Per the plan this may run alongside Tasks 3-13, but since those are all now done
-  sequentially anyway there's no parallelism benefit left to capture — just run it normally).
-- **Branch:** `main` at `644814a`.
-- **Waiting on user:** confirmation to proceed to Task 14
+- **Current task:** Task 14 (in progress — dispatched to haiku sub-agent). Note: the plan allowed this
+  to run alongside Tasks 3-13, but since those are all done sequentially now, it's just run normally.
+- **Next action:** review Task 14 sub-agent's work when it finishes (including viewing the generated
+  icon frames myself), report to user, wait for go-ahead before Task 15.
+- **Branch:** `main` at `aceeae3`.
+- **Waiting on user:** nothing right now
 - **Known environment quirk:** `cargo test --lib` occasionally hits a transient Windows linker error
   (`LNK1104: cannot open file ...claudehud-*.exe`), seen in both Task 10 and Task 11's runs. An
   immediate retry with no code changes always passes. Likely a stale file handle (antivirus scan or a
@@ -56,7 +56,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | 11 | Settings, geometry, hover | haiku | done | 407a6ae | verified independently: 105 lib tests + all integration tests pass, clippy and fmt clean; no code deviations (only cargo fmt line-wrapping) |
 | 12 | Panel layout | sonnet | done | c360f3a | verified independently: 117 lib tests (incl. all 12 panel tests) + all integration tests pass, clippy clean; trivial `#[cfg(test)]`-gated import addition, same pattern as Tasks 10/11 |
 | 13 | Collector + fetch + schedule | sonnet | done | 644814a | verified independently: 143 tests total pass (incl. all 12 collect tests, both flagged-tricky ones), clippy and fmt clean; trivial `#[allow(clippy::type_complexity)]` on a test-fake field, same pattern as prior tasks |
-| 14 | App icon asset | haiku | todo | | PowerShell + visual check |
+| 14 | App icon asset | haiku | in progress | | dispatched to haiku sub-agent |
 | 15 | Platform services (Win32) | sonnet | todo | | compile-driven signature fixes |
 | 16 | Strip + tray + loop | sonnet | todo | | first visible milestone; user checks the screen |
 | 17 | Live wiring + worker | sonnet | todo | | user checks against real sessions |
