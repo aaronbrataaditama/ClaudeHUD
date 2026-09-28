@@ -10,3 +10,4 @@ pub mod system;
 pub mod tray;
 pub mod wide;
 pub mod win;
+pub mod worker;

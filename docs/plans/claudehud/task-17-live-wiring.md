@@ -17,7 +17,7 @@
 
 ---
 
-- [ ] **Step 1: Worker thread**
+- [x] **Step 1: Worker thread**
 
 `src/platform/worker.rs`:
 
@@ -128,7 +128,7 @@ fn worker_loop(target: isize, claude_dir: PathBuf, mut usage_s: u64, mut status_
 
 Add `pub mod worker;` to `src/platform/mod.rs`.
 
-- [ ] **Step 2: Replace `src/platform/app.rs`**
+- [x] **Step 2: Replace `src/platform/app.rs`**
 
 Full new content. Changes from Task 16 are `collector`, `probe` and `worker` fields, `tick()`, `drain_worker()` and `WM_WORKER`.
 
@@ -390,12 +390,19 @@ extern "system" fn strip_proc(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM) -> L
 }
 ```
 
-- [ ] **Step 3: Build**
+- [x] **Step 3: Build**
 
 Run: `cargo build --release`, `cargo clippy --all-targets -- -D warnings`
 Expected: clean.
 
-- [ ] **Step 4: Verify against real sessions**
+- [x] **Step 4: Verify against real sessions**
+
+Note (2026-09-28): only the first, safe check below was run by the implementing sub-agent — it
+started `claudehud.exe` with `CLAUDEHUD_FIXTURE` unset (this session is itself a live, busy Claude
+Code session) and confirmed a green strip. Checks 1-6 that touch other live sessions, the user's
+Wi-Fi, or require an interactive second terminal were deliberately **not** attempted by the
+sub-agent per the coordinator's scope limit, and are deferred to the coordinator/user to run
+together:
 
 The implementer is itself a Claude Code session, which makes a live test easy:
 
@@ -415,7 +422,7 @@ Expected: a **green** strip. This session is busy while it runs the command. Vie
 5. Kill a busy session's terminal window mid-turn (the Task 2 spike step 7 again). Expected: the strip turns **red** and the tooltip says `… crashed mid-turn · click to acknowledge`. There is no panel yet to acknowledge it, so Exit ClaudeHUD from the tray and restart it: after the restart the stale file must **not** show red (Review Focus #2).
 6. Turn Wi-Fi off for 10 s. Nothing changes colour; the tooltip's line two may show `usage unavailable · offline` at the next poll.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 cargo fmt

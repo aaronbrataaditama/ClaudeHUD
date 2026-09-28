@@ -1,11 +1,14 @@
-//! Message loop and wiring. Task 16 version: strip + tray driven by CLAUDEHUD_FIXTURE.
+//! Message loop and wiring. Task 17 version: live data into the strip and tray.
 
 use super::layered;
 use super::localtime::local_parts;
 use super::monitors;
+use super::process::WinProbe;
 use super::system;
 use super::tray::{Tray, WM_TRAY};
 use super::win;
+use super::worker::{Worker, WorkerMsg, WM_WORKER};
+use crate::collect::Collector;
 use crate::geometry::{self, MonitorInfo, Rect};
 use crate::icon::{self, Badge};
 use crate::model::{Colour, Light, Snapshot, DIM_ALPHA};
@@ -31,7 +34,6 @@ thread_local! {
     static APP: RefCell<Option<App>> = const { RefCell::new(None) };
 }
 
-/// Runs `f` on the app unless the state is already borrowed (a re-entrant message).
 fn with_app<R>(f: impl FnOnce(&mut App) -> R) -> Option<R> {
     APP.with(|cell| match cell.try_borrow_mut() {
         Ok(mut guard) => guard.as_mut().map(f),
@@ -47,6 +49,9 @@ struct App {
     settings: Settings,
     monitors: Vec<MonitorInfo>,
     fixture: Option<PathBuf>,
+    collector: Collector,
+    probe: WinProbe,
+    worker: Option<Worker>,
     snapshot: Snapshot,
     light: Light,
     shown_strip: Option<(Rect, Colour, bool)>,
@@ -80,6 +85,17 @@ pub fn run() {
         log::warn("CreateWindowExW failed");
         return;
     };
+    let fixture = std::env::var_os("CLAUDEHUD_FIXTURE").map(PathBuf::from);
+    let claude_dir = system::claude_dir();
+    // Fixture mode replaces every collector, including the network ones.
+    let worker = fixture.is_none().then(|| {
+        Worker::spawn(
+            controller,
+            claude_dir.clone(),
+            settings.usage_poll_s as u64,
+            settings.status_poll_s as u64,
+        )
+    });
     let app = App {
         controller,
         strip,
@@ -87,13 +103,16 @@ pub fn run() {
         taskbar_created: unsafe { RegisterWindowMessageW(w!("TaskbarCreated")) },
         settings,
         monitors: monitors::enumerate(),
-        fixture: std::env::var_os("CLAUDEHUD_FIXTURE").map(PathBuf::from),
+        fixture,
+        collector: Collector::new(claude_dir),
+        probe: WinProbe::new(),
+        worker,
         snapshot: Snapshot::default(),
         light: Light::off(),
         shown_strip: None,
     };
     APP.with(|cell| *cell.borrow_mut() = Some(app));
-    with_app(App::refresh);
+    with_app(App::tick);
     unsafe {
         SetTimer(Some(controller), TIMER_TICK, 1000, None);
         let mut msg = MSG::default();
@@ -106,6 +125,26 @@ pub fn run() {
 }
 
 impl App {
+    /// 1 s tick: collect, then redraw what changed.
+    fn tick(&mut self) {
+        if self.fixture.is_none() {
+            self.collector.tick(timefmt::now_ms(), &self.probe, false);
+        }
+        self.refresh();
+    }
+
+    fn drain_worker(&mut self) {
+        let now = timefmt::now_ms();
+        if let Some(w) = &self.worker {
+            while let Ok(m) = w.results.try_recv() {
+                match m {
+                    WorkerMsg::Usage(o) => self.collector.apply_usage(o, now),
+                    WorkerMsg::Status(r) => self.collector.apply_status(r),
+                }
+            }
+        }
+    }
+
     fn refresh(&mut self) {
         let now = timefmt::now_ms();
         self.snapshot = match &self.fixture {
@@ -122,11 +161,7 @@ impl App {
                     }
                 }
             },
-            None => Snapshot {
-                now_ms: now,
-                warn_percent: self.settings.warn_percent,
-                ..Snapshot::default()
-            },
+            None => self.collector.snapshot(now, self.settings.warn_percent),
         };
         self.light = state::fold(&self.snapshot, Some(&self.light));
         self.update_strip();
@@ -148,7 +183,7 @@ impl App {
         let r = geometry::strip_rect(&m, self.settings.edge);
         let key = (r, self.light.colour, self.light.dim);
         if self.shown_strip == Some(key) {
-            win::set_topmost(self.strip); // another app's topmost window may have demoted us
+            win::set_topmost(self.strip);
             return;
         }
         let alpha = if self.light.dim { DIM_ALPHA } else { 1.0 };
@@ -174,7 +209,11 @@ impl App {
 
     fn on_controller(&mut self, msg: u32, wp: WPARAM, lp: LPARAM) -> Option<LRESULT> {
         match msg {
-            WM_TIMER if wp.0 == TIMER_TICK => self.refresh(),
+            WM_TIMER if wp.0 == TIMER_TICK => self.tick(),
+            WM_WORKER => {
+                self.drain_worker();
+                self.refresh();
+            }
             WM_TRAY => {
                 if (lp.0 as u32) & 0xFFFF == WM_RBUTTONUP {
                     self.show_menu();
@@ -195,7 +234,6 @@ impl App {
             let _ = AppendMenuW(menu, MF_STRING, CMD_EXIT as usize, w!("Exit"));
             let mut pt = POINT::default();
             let _ = GetCursorPos(&mut pt);
-            // Required so the menu closes when the user clicks elsewhere (documented tray quirk).
             let _ = SetForegroundWindow(self.controller);
             let cmd = TrackPopupMenu(
                 menu,
