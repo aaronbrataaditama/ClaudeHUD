@@ -23,10 +23,10 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
   immediate retry with no code changes always passes. Likely a stale file handle (antivirus scan or a
   lingering process) rather than a real bug — note this for any future task so nobody chases a ghost.
 - **Environment note:** Rust 1.98.1 installed via `winget install Rustlang.Rustup`. Cargo bin is
-  `C:\Users\AaronBrataAditama\.cargo\bin`; `setx` added it to the user PATH for new sessions, but the
+  `%USERPROFILE%\.cargo\bin`; `setx` added it to the user PATH for new sessions, but the
   *current* shell environment does not see it (harness shells don't source `.bash_profile` and don't
   re-read the registry). Every bash command in this session that calls `cargo`/`rustc`/`rustup` must
-  start with `export PATH="$PATH:/c/Users/AaronBrataAditama/.cargo/bin"` (or use the full path). This
+  start with `export PATH="$PATH:$USERPROFILE/.cargo/bin"` (or use the full path). This
   applies to sub-agents too — tell each implementer explicitly.
 
 ### How to resume after a pause

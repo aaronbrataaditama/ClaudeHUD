@@ -172,7 +172,7 @@ Live sample (Claude Code 2.1.281):
 ```json
 {"pid":22488,"sessionId":"34bea346-…","cwd":"C:\\Projects\\Personal\\ClaudeHUD",
  "startedAt":1790301420182,"procStart":"134347750190770188","version":"2.1.281",
- "kind":"interactive","entrypoint":"cli","pidDomain":"win32:laptop-6n3ets5a",
+ "kind":"interactive","entrypoint":"cli","pidDomain":"win32:dev-machine",
  "name":"claudehud-a4","status":"busy","statusUpdatedAt":1790302083994, …}
 ```
 
@@ -243,8 +243,8 @@ Scanned only while the panel is visible, or when a live session's transcript cha
 
 ### 3.5 Usage limits (`GET https://api.anthropic.com/api/oauth/usage`) — amber, quota red
 
-Headers `Authorization: Bearer <token>`, `anthropic-beta: oauth-2025-04-20`, as in
-`C:\Projects\Personal\AIUsage\Platform\ClaudeUsage.cs`.
+Headers `Authorization: Bearer <token>`, `anthropic-beta: oauth-2025-04-20` (the same headers other
+community tools that read this endpoint use).
 
 - Re-read `~/.claude/.credentials.json` on every poll (Claude Code refreshes it). Never refresh, log or
   display the token.

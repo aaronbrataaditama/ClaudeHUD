@@ -71,7 +71,7 @@ pub enum Liveness {
 pub trait ProcessProbe {
     /// Creation time of a *running* process as FILETIME, or None if no such process.
     fn creation_filetime(&self, pid: u32) -> Option<u64>;
-    /// This machine's domain, e.g. "win32:laptop-6n3ets5a". Compared case-insensitively.
+    /// This machine's domain, e.g. "win32:dev-machine". Compared case-insensitively.
     fn pid_domain(&self) -> String;
 }
 
@@ -200,7 +200,7 @@ mod tests {
     use super::*;
     use std::collections::HashMap;
 
-    const SAMPLE: &str = r#"{"pid":22488,"sessionId":"34bea346-2ede-4248-8364-2c33033971a7","cwd":"C:\\Projects\\Personal\\ClaudeHUD","startedAt":1790301420182,"procStart":"134347750190770188","version":"2.1.281","peerProtocol":1,"peerFeatures":["notify_idle","artifact_yield"],"kind":"interactive","entrypoint":"cli","pidDomain":"win32:laptop-6n3ets5a","messagingSocketPath":"\\\\.\\pipe\\LOCAL\\cc-msg-2084","name":"claudehud-a4","nameSource":"derived","nameSince":1790301420182,"updatedAt":1790302083994,"status":"busy","statusUpdatedAt":1790302083994}"#;
+    const SAMPLE: &str = r#"{"pid":22488,"sessionId":"34bea346-2ede-4248-8364-2c33033971a7","cwd":"C:\\Projects\\Personal\\ClaudeHUD","startedAt":1790301420182,"procStart":"134347750190770188","version":"2.1.281","peerProtocol":1,"peerFeatures":["notify_idle","artifact_yield"],"kind":"interactive","entrypoint":"cli","pidDomain":"win32:dev-machine","messagingSocketPath":"\\\\.\\pipe\\LOCAL\\cc-msg-2084","name":"claudehud-a4","nameSource":"derived","nameSince":1790301420182,"updatedAt":1790302083994,"status":"busy","statusUpdatedAt":1790302083994}"#;
 
     pub struct FakeProbe {
         pub procs: HashMap<u32, u64>,
@@ -217,7 +217,7 @@ mod tests {
     fn probe(pid: u32, created: u64) -> FakeProbe {
         FakeProbe {
             procs: HashMap::from([(pid, created)]),
-            domain: "win32:LAPTOP-6N3ETS5A".into(),
+            domain: "win32:DEV-MACHINE".into(),
         }
     }
 

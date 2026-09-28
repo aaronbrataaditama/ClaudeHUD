@@ -40,8 +40,8 @@ fn live_20260925_is_spend_only_via_the_spend_object() {
     );
 
     let s = u.spend.expect("expected Some(Spend)");
-    assert_eq!(s.used_minor, 9948);
-    assert_eq!(s.limit_minor, Some(60_000));
+    assert_eq!(s.used_minor, 15_000);
+    assert_eq!(s.limit_minor, Some(50_000));
     assert_eq!(s.currency, "USD");
     assert!(s.enabled);
 }

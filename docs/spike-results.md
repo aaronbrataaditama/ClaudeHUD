@@ -8,8 +8,8 @@
 | MCP elicitation | not tested (no MCP server configured that prompts) | | | |
 
 - procStart matches process creation FILETIME: **yes** — every observed session showed `procStart=OK`
-  across dozens of transitions and multiple sessions (`claudehud-5c`, `claudehud-ec`, `claudehud-1a`,
-  `tests-6d`, `docassembler-69`, `ai-hacking-australia-summary`). No tolerance adjustment needed.
+  across dozens of transitions and multiple concurrently-running Claude Code sessions on the same
+  machine. No tolerance adjustment needed.
 - Killed mid-turn: registry file kept? **yes**, status left as `busy` (user killed terminal B mid-turn;
   the file was not deleted and stayed at `busy` rather than updating).
 - Usage response top-level keys: `five_hour, seven_day, seven_day_oauth_apps, seven_day_opus,
@@ -30,8 +30,8 @@
    `{used: {amount_minor, currency, exponent}, limit: {amount_minor, currency, exponent}, percent,
    severity, enabled, disabled_reason, cap: {money, credits: {amount_minor, exponent}}, balance,
    auto_reload, disclaimer, can_purchase_credits, can_toggle}`. It already carries a computed
-   `percent` (17) and a `severity` enum (`"normal"`) that line up with `extra_usage.utilization`
-   (16.58%) — this is a cleaner, more directly usable source for $ spend display than `extra_usage`.
+   `percent` and a `severity` enum (`"normal"`) that line up with `extra_usage.utilization` — this is
+   a cleaner, more directly usable source for $ spend display than `extra_usage`.
 2. **This account has neither `limits[]` nor any populated named window** — it is a zero-token-quota
    enterprise account billed purely by $ spend (`rateLimitTier=default_claude_zero`). This is a
    different shape than the Team/Max-5x case the plan was written around (that case has real
