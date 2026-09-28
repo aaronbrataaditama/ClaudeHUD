@@ -255,6 +255,25 @@ Findings and actions:
   *then* the history rewrite ran on top of that, so this commit's own hash also changed (see the
   "IMPORTANT" note in Resume Here above).
 
+## Post-v1 features (added after the initial public push)
+
+- 2026-09-28: **Versioning added.** Bumped `Cargo.toml`'s `version` to `1.0.0` (from `0.1.0`) and the
+  embedded manifest's `assemblyIdentity` to `1.0.0.0` to match, marking the v1 feature-complete
+  milestone. Added a disabled `"ClaudeHUD v<version>"` label at the top of the tray context menu
+  (`src/platform/menu.rs`), reading the version via `env!("CARGO_PKG_VERSION")` so it can never drift
+  from the actual build. Updated `PLAN-CLAUDEHUD.md` §5's tray menu item list to match (renumbered).
+  Commit `01df20c`.
+- 2026-09-28: **Verification note — visual confirmation of the tray menu item was not obtained.**
+  Build and `cargo clippy --all-targets -- -D warnings` both pass clean, and the code uses the exact
+  same `AppendMenuW`/combined-flags pattern already proven working for the existing `CMD_AUTOSTART`
+  checkbox item. However, repeated attempts to screenshot or UI-Automate the actual native popup menu
+  to see the new label rendered failed (native `TrackPopupMenu` menus are notoriously hard to script:
+  `FindWindow` could not locate the invisible `ClaudeHUDController` window that owns the tray icon
+  despite finding the Strip/Panel windows fine, and simulated clicks on the taskbar's overflow chevron
+  landed on the wrong UI). Did not force the issue further given the change's low risk. **A resumed
+  session or the user should do one quick manual check**: right-click the tray icon and confirm
+  "ClaudeHUD v1.0.0" appears, greyed out, as the first item.
+
 ## Blockers
 
 None yet.
