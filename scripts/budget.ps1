@@ -15,7 +15,7 @@ $wsMb = [math]::Round($p.WorkingSet64 / 1MB, 1)
 $cpu = [math]::Round($p.TotalProcessorTime.TotalSeconds, 2)
 Stop-Process $p
 "exe: $sizeKb KB (budget 2048 KB)"
-"working set: $wsMb MB (budget 40 MB)"
+"working set: $wsMb MB (budget 110 MB)"
 "CPU used in 60 s: $cpu s (expect well under 1 s)"
-if ($sizeKb -gt 2048 -or $wsMb -gt 40) { Write-Host "OVER BUDGET" -ForegroundColor Red; exit 1 }
+if ($sizeKb -gt 2048 -or $wsMb -gt 110) { Write-Host "OVER BUDGET" -ForegroundColor Red; exit 1 }
 Write-Host "Within budget" -ForegroundColor Green

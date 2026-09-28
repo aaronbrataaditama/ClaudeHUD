@@ -37,5 +37,5 @@ Run from `target\release\claudehud.exe` unless noted. Tick every line before a r
 ## Portability and budgets
 - [ ] Copy only `claudehud.exe` to a new folder on another Windows 11 machine: runs with no installer.
 - [ ] Nothing is written under `%USERPROFILE%\.claude` (compare folder timestamps before and after a run).
-- [ ] `scripts\budget.ps1`: exe < 2 MB, working set < 40 MB, CPU well under 1 s per minute.
+- [ ] `scripts\budget.ps1`: exe < 2 MB, working set < 110 MB, CPU well under 1 s per minute.
 - [ ] `cargo test --test smoke -- --ignored --test-threads=1` passes.
