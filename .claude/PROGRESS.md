@@ -10,12 +10,15 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Task 11 (in progress — dispatched to haiku sub-agent). Resumed 2026-09-28 after
-  the 2026-09-25 pause; git state matched this file exactly, no drift.
-- **Next action:** review Task 11 sub-agent's work when it finishes, report to user, wait for
-  go-ahead before Task 12.
-- **Branch:** `main` at `6740e52`.
-- **Waiting on user:** nothing right now
+- **Current task:** Task 11 done. Task 12 not started.
+- **Next action:** waiting on user go-ahead to start Task 12 (panel layout — sonnet; the largest pure
+  module).
+- **Branch:** `main` at `407a6ae`.
+- **Waiting on user:** confirmation to proceed to Task 12
+- **Known environment quirk:** `cargo test --lib` occasionally hits a transient Windows linker error
+  (`LNK1104: cannot open file ...claudehud-*.exe`), seen in both Task 10 and Task 11's runs. An
+  immediate retry with no code changes always passes. Likely a stale file handle (antivirus scan or a
+  lingering process) rather than a real bug — note this for any future task so nobody chases a ghost.
 - **Environment note:** Rust 1.98.1 installed via `winget install Rustlang.Rustup`. Cargo bin is
   `C:\Users\AaronBrataAditama\.cargo\bin`; `setx` added it to the user PATH for new sessions, but the
   *current* shell environment does not see it (harness shells don't source `.bash_profile` and don't
@@ -49,7 +52,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | 8 | Status parser | haiku | done | efa02af (merge 6e64f91) | verified independently after merge |
 | 9 | fold(), latch, fixtures, golden | sonnet | done | 92c9db6 | verified independently: 83 tests pass (incl. all 21 golden fixtures), clippy clean; trivial import-placement deviation (`SessionStatus` moved into the test module, matching `latch.rs`'s existing pattern, to satisfy clippy's unused-import gate) |
 | 10 | Tooltip + icon pixels | sonnet | done | d3d0bac | verified independently: 84 lib tests + all integration tests pass, clippy clean; trivial `#[cfg(test)]`-gated import addition (types the given test code needs that the given top-level `use` line omitted) |
-| 11 | Settings, geometry, hover | haiku | in progress | | dispatched to haiku sub-agent |
+| 11 | Settings, geometry, hover | haiku | done | 407a6ae | verified independently: 105 lib tests + all integration tests pass, clippy and fmt clean; no code deviations (only cargo fmt line-wrapping) |
 | 12 | Panel layout | sonnet | todo | | largest pure module |
 | 13 | Collector + fetch + schedule | sonnet | todo | | |
 | 14 | App icon asset | haiku | todo | | PowerShell + visual check |
