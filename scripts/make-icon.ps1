@@ -9,8 +9,8 @@ $ErrorActionPreference = "Stop"
 Add-Type -AssemblyName System.Drawing
 
 $src = [System.Drawing.Image]::FromFile((Resolve-Path $Source).Path)
-# Rounded tile inside the 2000 x 1091 artwork
-$tile = [System.Drawing.Rectangle]::new(590, 135, 820, 820)
+# Rounded tile inside the 2816 x 1536 artwork (proportional crop of the source)
+$tile = [System.Drawing.Rectangle]::new(831, 190, 1155, 1155)
 
 function New-RoundedPath([float]$x, [float]$y, [float]$w, [float]$h, [float]$r) {
     $p = [System.Drawing.Drawing2D.GraphicsPath]::new()
