@@ -10,8 +10,11 @@ pub mod geometry;
 pub mod hover;
 pub mod icon;
 pub mod latch;
+pub mod log;
 pub mod model;
 pub mod panel;
+#[cfg(windows)]
+pub mod platform;
 pub mod settings;
 pub mod state;
 pub mod timefmt;

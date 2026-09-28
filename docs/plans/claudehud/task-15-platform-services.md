@@ -25,7 +25,7 @@ Read the README's **Notes for implementers** first: this code targets `windows` 
 
 ## Part A: the log (platform-free)
 
-- [ ] **Step 1: Failing tests**
+- [x] **Step 1: Failing tests**
 
 `src/log.rs`, tests only:
 
@@ -64,7 +64,7 @@ mod tests {
 
 Add `pub mod log;` to `src/lib.rs`.
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 Above the tests:
 
@@ -121,7 +121,7 @@ Expected: 2 passed.
 
 ## Part B: Windows services
 
-- [ ] **Step 3: Module list and wide strings**
+- [x] **Step 3: Module list and wide strings**
 
 `src/platform/mod.rs`:
 
@@ -146,7 +146,7 @@ pub fn wide(s: &str) -> Vec<u16> {
 
 Add to `src/lib.rs`: `#[cfg(windows)] pub mod platform;`
 
-- [ ] **Step 4: Process probe**
+- [x] **Step 4: Process probe**
 
 `src/platform/process.rs`:
 
@@ -236,7 +236,7 @@ mod tests {
 }
 ```
 
-- [ ] **Step 5: Local time**
+- [x] **Step 5: Local time**
 
 `src/platform/localtime.rs`:
 
@@ -282,7 +282,7 @@ mod tests {
 }
 ```
 
-- [ ] **Step 6: WinHTTP client**
+- [x] **Step 6: WinHTTP client**
 
 `src/platform/http.rs`:
 
@@ -438,7 +438,7 @@ mod tests {
 }
 ```
 
-- [ ] **Step 7: System helpers**
+- [x] **Step 7: System helpers**
 
 `src/platform/system.rs`:
 
@@ -616,14 +616,14 @@ mod tests {
 
 Do **not** add a test that calls `sync_autostart`: it writes the real Run key.
 
-- [ ] **Step 8: Build and run the Windows tests**
+- [x] **Step 8: Build and run the Windows tests**
 
 Run: `cargo test --lib platform::`
 Expected: 6 passed, 1 ignored (`live_status_page`). Then run the ignored one once:
 `cargo test --lib live_status_page -- --ignored`
 Expected: passes (needs network; if behind a proxy that WinHTTP cannot auto-detect, report it rather than hard-coding a proxy).
 
-- [ ] **Step 9: Lint and commit**
+- [x] **Step 9: Lint and commit**
 
 ```powershell
 cargo clippy --all-targets -- -D warnings
