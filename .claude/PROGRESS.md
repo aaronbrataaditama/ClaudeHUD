@@ -10,11 +10,11 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Task 12 done. Task 13 not started.
-- **Next action:** waiting on user go-ahead to start Task 13 (collector + fetch + schedule — sonnet;
-  WinHTTP-based polling with backoff).
-- **Branch:** `main` at `c360f3a`.
-- **Waiting on user:** confirmation to proceed to Task 13
+- **Current task:** Task 13 (in progress — dispatched to sonnet sub-agent).
+- **Next action:** review Task 13 sub-agent's work when it finishes, report to user, wait for
+  go-ahead before Task 14.
+- **Branch:** `main` at `6a994de`.
+- **Waiting on user:** nothing right now
 - **Known environment quirk:** `cargo test --lib` occasionally hits a transient Windows linker error
   (`LNK1104: cannot open file ...claudehud-*.exe`), seen in both Task 10 and Task 11's runs. An
   immediate retry with no code changes always passes. Likely a stale file handle (antivirus scan or a
@@ -54,7 +54,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | 10 | Tooltip + icon pixels | sonnet | done | d3d0bac | verified independently: 84 lib tests + all integration tests pass, clippy clean; trivial `#[cfg(test)]`-gated import addition (types the given test code needs that the given top-level `use` line omitted) |
 | 11 | Settings, geometry, hover | haiku | done | 407a6ae | verified independently: 105 lib tests + all integration tests pass, clippy and fmt clean; no code deviations (only cargo fmt line-wrapping) |
 | 12 | Panel layout | sonnet | done | c360f3a | verified independently: 117 lib tests (incl. all 12 panel tests) + all integration tests pass, clippy clean; trivial `#[cfg(test)]`-gated import addition, same pattern as Tasks 10/11 |
-| 13 | Collector + fetch + schedule | sonnet | todo | | |
+| 13 | Collector + fetch + schedule | sonnet | in progress | | dispatched to sonnet sub-agent |
 | 14 | App icon asset | haiku | todo | | PowerShell + visual check |
 | 15 | Platform services (Win32) | sonnet | todo | | compile-driven signature fixes |
 | 16 | Strip + tray + loop | sonnet | todo | | first visible milestone; user checks the screen |
