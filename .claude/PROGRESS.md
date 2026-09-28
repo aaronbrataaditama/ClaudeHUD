@@ -10,18 +10,12 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Task 18 (in progress — dispatched to sonnet sub-agent, escalate to opus if it fails
-  twice). The hardest Win32 task: Direct2D/DirectWrite panel renderer, hover-driven slide animation,
-  pin/tooltip/expand/scroll — checked against the mockup.
-- **Next action:** when the sub-agent finishes, independently re-verify visually myself (run the given
-  `fixtures/manual/team_mockup.json` fixture, screenshot the panel, view it next to
-  `claudehud-mockup.html` section 1) before trusting the report — same standard as Tasks 14/16/17. One
-  of Step 5's live checks ("kill a busy session, red strip, panel shows crash row") touches other live
-  sessions — scoped out of the sub-agent's delegation the same way as Task 17, deferred to
-  `docs/manual-qa-pending.md` for the coordinator/user to do together. Report to user, wait for
-  go-ahead before Task 19.
-- **Branch:** `main` at `5c18db9`.
-- **Waiting on user:** nothing right now
+- **Current task:** Task 18 done — **the hover panel is fully live and visually verified**. Task 19
+  not started.
+- **Next action:** waiting on user go-ahead to start Task 19 (menu + system integration — sonnet; user
+  runs the checklist in that task's Step 3).
+- **Branch:** `main` at `0150405`.
+- **Waiting on user:** confirmation to proceed to Task 19
 - **Known environment quirk:** `cargo test --lib` occasionally hits a transient Windows linker error
   (`LNK1104: cannot open file ...claudehud-*.exe`), seen in both Task 10 and Task 11's runs. An
   immediate retry with no code changes always passes. Likely a stale file handle (antivirus scan or a
@@ -66,7 +60,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | 15 | Platform services (Win32) | sonnet | done | 3a9558e | verified independently: 125 lib tests (1 ignored) + all integration tests pass, clippy/fmt clean, live WinHTTP status test passed, scratch registry key confirmed gone, real Run autostart key confirmed untouched. No real deviations — the task file's two flagged windows-0.61 API changes (`from_win32`→`from_thread`, `WinHttpOpenRequest`'s accept-types param) turned out not to apply to the pinned 0.61.3; the verbatim code compiled clean on the first try. |
 | 16 | Strip + tray + loop | sonnet | done | 4237a26 | **coordinator independently re-ran the app and took my own screenshots**, not just trusting the sub-agent's report: started `claudehud.exe` myself with the yellow-waiting fixture and confirmed a yellow strip at the top of the screen; edited the fixture live (waiting→idle) and confirmed the strip changed to amber within ~2s (matches `QuotaWarn` outranking `Working` once the yellow reason clears, since this fixture's usage is already at 92%); restored the fixture via `git checkout`; force-killed the process and confirmed no `claudehud.exe` left running. Did not personally reproduce the tray-icon screenshot (it defaults to the taskbar overflow, which the task file itself treats as expected, not a failure) — accepted the implementer's UI-Automation-based verification for that part (it matched the icon's accessible Name to the exact expected tooltip string and confirmed badge color by pixel-sampling a zoomed capture). Two clippy-driven deviations (`chunks_exact_mut`→`as_chunks_mut`, one `#[allow(clippy::manual_dangling_ptr)]` with a comment explaining why the suggested fix would break `MAKEINTRESOURCEW(1)` icon loading) and one `scripts/screenshot.ps1` fix (`CopyFromScreen` with `CaptureBlt` throws on this machine — a documented .NET limitation — replaced with a direct `BitBlt` P/Invoke). 125+ tests still pass, clippy/fmt clean. |
 | 17 | Live wiring + worker | sonnet | done | e97fee5 | verified independently: 125+ lib tests + all integration tests pass, clippy/fmt clean, no `claudehud.exe` left running. **Coordinator also independently re-ran the live check**: started the exe myself with no fixture and confirmed a green strip on screen (this session busy), matching the implementer's report. No windows-0.61 signature fixes needed this time — verbatim code compiled clean. Of the task file's 6 Step-4 manual checks, only the safe "green while busy" one was done (by both the implementer and me); the other 5 (kill a live session mid-turn, second permission-prompt session, close all sessions, disable Wi-Fi, wait-for-idle) were deliberately **not** delegated — held back to do with the user directly since they touch other live sessions/the real network. |
-| 18 | Panel window (Direct2D) | sonnet (escalate to opus if stuck) | in progress | | dispatched to sonnet sub-agent; hardest Win32 task |
+| 18 | Panel window (Direct2D) | sonnet | done | 0150405 | **coordinator independently re-verified visually, not just trusting the report**: rebuilt, ran the `team_mockup.json` and `red_quota_spent.json` fixtures myself, and confirmed both panels render correctly (header/usage/sessions/sub-agents/footer for the first; red banner + 100% red meter for the second) — screenshots matched the implementer's description in full detail. Along the way found a real environmental quirk worth recording (see decisions log): my first click attempt (simulated cursor + `mouse_event`) silently failed because a maximized window's Windows-11 "title bar scaffolding" hit-tested ahead of the topmost strip window across the entire top edge of the screen; worked around it by posting `WM_LBUTTONUP` directly to the strip's `HWND` (found via `FindWindow`), which is unaffected by hit-testing order. No windows-0.61.3 signature *spelling* fixes needed here, but one real deviation: `windows::Foundation::Numerics::Vector2` isn't reachable through any public path in this crate version (confirmed against crate source) — worked around with a macro that obtains a `Vector2` via `D2D1_ELLIPSE::default().point` rather than adding `windows-numerics` as an explicit new dependency (respects the no-new-crates-without-asking rule). Escalation to opus was authorized but not needed — sonnet handled it in one pass. 125+ tests pass, clippy/fmt clean, no `claudehud.exe` left running. |
 | 19 | Menu + system integration | sonnet | todo | | user runs the checklist in Step 3 |
 | 20 | Smoke test, budgets, checklist | haiku | todo | | final gate |
 | — | Final whole-branch review | opus | todo | | after Task 20 |
@@ -132,6 +126,19 @@ Newest last. Record anything a resumed session must know that is not already in 
   can be avoided — if a real dependency is missing, ask the coordinator rather than guessing, since
   fabricated stubs create extra merge work. This was caught here (Task 6's stubs) but cost a full
   round of correction messages plus manual `git checkout --ours` during merge.
+- 2026-09-28: **Real Windows 11 quirk found during Task 18 verification, not a ClaudeHUD bug**: when a
+  window on the same monitor is maximized, Windows 11's DWM-owned "title bar scaffolding" overlay
+  (window class `TITLE_BAR_SCAFFOLDING_WINDOW_CLASS`, used for the Snap Layout hover affordance) claims
+  mouse hit-testing across the *entire top edge of the screen*, ahead of even `WS_EX_TOPMOST` windows —
+  confirmed with `WindowFromPoint` at multiple coordinates across the strip's span, all returning that
+  class instead of `ClaudeHUDStrip`. This means a real user's mouse literally cannot hover/click the
+  strip through normal input while any window is maximized on that monitor, even though the strip still
+  *draws* on top and looks clickable. Worked around it for verification purposes only by posting
+  `WM_LBUTTONUP` straight to the strip's `HWND`; that is a test technique, not a fix — **the underlying
+  reachability problem is unresolved in the shipped app**. This may need a real mitigation (a taller hit
+  area, an edge inset, or accepting it as a known limitation) — flag for the final whole-branch review
+  and/or Task 19's system-integration pass; not blocking Task 18 itself, since the panel's rendering,
+  layout and hover *logic* are all independently verified correct once a click reaches the window.
 - 2026-09-28: **Task 14's icon crop was wrong, and the implementer's own visual check missed it.**
   `scripts/make-icon.ps1`'s crop rectangle `(590, 135, 820, 820)` (copied verbatim from the task file)
   assumes a 2000px-wide source image, but the actual `assets/ClaudeHUD_icon.jpg` is **2816×1536**. The
