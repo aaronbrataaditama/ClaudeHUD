@@ -38,8 +38,6 @@ pub struct Hover {
     pub pinned: bool,
     pub in_strip: bool,
     pub in_panel: bool,
-    /// The strip's edge borders another monitor: hover never reveals.
-    pub reveal_suppressed: bool,
 }
 
 impl Hover {
@@ -55,7 +53,7 @@ impl Hover {
             }
             Event::StripHover => {
                 self.in_strip = true;
-                if !self.visible && !self.reveal_suppressed {
+                if !self.visible {
                     self.visible = true;
                     out.push(Show);
                 }
@@ -229,17 +227,6 @@ mod tests {
             h.step(TrayClick),
             vec![Show, CancelCloseTimer, PinChanged(true)]
         );
-    }
-
-    #[test]
-    fn suppressed_edge_ignores_hover_but_not_clicks() {
-        let mut h = Hover {
-            reveal_suppressed: true,
-            ..Default::default()
-        };
-        h.step(StripEnter);
-        assert!(h.step(StripHover).is_empty());
-        assert!(h.step(StripClick).contains(&Show));
     }
 
     #[test]

@@ -328,8 +328,6 @@ impl App {
 
     fn update_strip(&mut self) {
         let Some(m) = self.monitor() else { return };
-        self.hover.reveal_suppressed =
-            geometry::edge_borders_other_monitor(&m, &self.monitors, self.settings.edge);
         if self.light.colour == Colour::Off || self.locked || self.fullscreen {
             if self.shown_strip.take().is_some() || self.fullscreen || self.locked {
                 win::hide(self.strip);

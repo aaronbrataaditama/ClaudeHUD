@@ -132,8 +132,11 @@ bundled.
   crossing the 8 px gap or leaving briefly does not flicker.
 - **Pin**: click the strip or the panel's pin glyph. A pinned panel stays until unpinned, the strip is
   clicked again, or the tray icon is clicked. Esc is not offered: the panel never has focus to receive it.
-- Suppress the reveal on any edge that borders another monitor (from `EnumDisplayMonitors`), otherwise
-  moving between displays would keep opening the panel.
+- No separate suppression for edges that border another monitor: the 250 ms `TME_HOVER` dwell above
+  already prevents a quick pass between adjacent monitors from triggering a reveal. An earlier revision
+  added a blanket `reveal_suppressed` flag for this case; manual testing found it made the strip's hover
+  reveal completely non-functional on any edge adjacent to another monitor (a common side-by-side
+  layout), while adding no protection beyond the dwell timer already provides, so it was removed.
 - `step()` is pure and table-tested (§8).
 
 ### 2.4 DPI, monitors, limitations
@@ -395,8 +398,7 @@ if it has moved (portable), deleted when unticked. This is the only write outsid
    trigger, plus collisions (waiting + 92% → yellow; 100% + no sessions → off; latched crash + no
    sessions → red; spend 100% → red).
 2. **Hover state machine** — `step()` table tests: pass-across under 250 ms (no reveal), dwell reveal,
-   leave-and-return within 300 ms (stays open), strip → gap → panel traversal, pin/unpin, edge
-   bordering another monitor (suppressed).
+   leave-and-return within 300 ms (stays open), strip → gap → panel traversal, pin/unpin.
 3. **Panel layout** — `layout(Snapshot)` is pure; assert row order, 12-row cap, tooltip clamping and
    ellipsis, scroll region, and that header/usage/footer stay fixed at the 80% height cap.
 4. **Parser fixtures** — registry (each status, unknown fields, missing status, stale pid, recycled pid),

@@ -108,26 +108,6 @@ pub fn max_content_h(m: &MonitorInfo) -> f32 {
     m.work.h as f32 / m.scale * MAX_PANEL_FRACTION
 }
 
-fn overlaps(a0: i32, a1: i32, b0: i32, b1: i32) -> bool {
-    a0 < b1 && b0 < a1
-}
-
-/// True when another monitor touches `edge` of `m` where the strip is, so
-/// moving the pointer between displays would cross the strip (§2.3).
-pub fn edge_borders_other_monitor(m: &MonitorInfo, all: &[MonitorInfo], edge: Edge) -> bool {
-    let strip = strip_rect(m, edge);
-    all.iter().filter(|o| o.id != m.id).any(|o| match edge {
-        Edge::Top => {
-            (o.bounds.bottom() - m.bounds.y).abs() <= 1
-                && overlaps(o.bounds.x, o.bounds.right(), strip.x, strip.right())
-        }
-        Edge::Left => {
-            (o.bounds.right() - m.bounds.x).abs() <= 1
-                && overlaps(o.bounds.y, o.bounds.bottom(), strip.y, strip.bottom())
-        }
-    })
-}
-
 /// Offset of the panel from its final position during the slide; `eased` 0 → 1.
 pub fn slide_offset(edge: Edge, eased: f32, scale: f32) -> (i32, i32) {
     let d = -to_px(SLIDE * (1.0 - eased.clamp(0.0, 1.0)), scale);
@@ -241,40 +221,6 @@ mod tests {
         assert_eq!(pick_monitor(&ms, "primary").unwrap().id, "B");
         assert_eq!(pick_monitor(&ms, "gone").unwrap().id, "B");
         assert!(pick_monitor(&[], "primary").is_none());
-    }
-
-    #[test]
-    fn detects_edges_shared_with_other_monitors() {
-        let a = mon("A", true, (0, 0, 1920, 1080), 40, 1.0);
-        let above = mon("U", false, (0, -1080, 1920, 1080), 0, 1.0);
-        let left = mon("L", false, (-1920, 0, 1920, 1080), 0, 1.0);
-        assert!(edge_borders_other_monitor(
-            &a,
-            &[a.clone(), above.clone()],
-            Edge::Top
-        ));
-        assert!(!edge_borders_other_monitor(
-            &a,
-            &[a.clone(), above],
-            Edge::Left
-        ));
-        assert!(edge_borders_other_monitor(
-            &a,
-            &[a.clone(), left.clone()],
-            Edge::Left
-        ));
-        assert!(!edge_borders_other_monitor(
-            &a,
-            &[a.clone(), left],
-            Edge::Top
-        ));
-        // a monitor above but offset so it does not cover the strip's span
-        let offset = mon("O", false, (1500, -1080, 1920, 1080), 0, 1.0);
-        assert!(!edge_borders_other_monitor(
-            &a,
-            &[a.clone(), offset],
-            Edge::Top
-        ));
     }
 
     #[test]

@@ -11,11 +11,12 @@ use std::ffi::c_void;
 use windows::core::{w, PCWSTR};
 use windows::Win32::Foundation::{HINSTANCE, HWND, RECT};
 use windows::Win32::Graphics::Direct2D::Common::{
-    D2D1_ALPHA_MODE_PREMULTIPLIED, D2D1_COLOR_F, D2D1_PIXEL_FORMAT, D2D_RECT_F,
+    D2D1_ALPHA_MODE_PREMULTIPLIED, D2D1_COLOR_F, D2D1_FIGURE_BEGIN_HOLLOW, D2D1_FIGURE_END_OPEN,
+    D2D1_PIXEL_FORMAT, D2D_RECT_F,
 };
 use windows::Win32::Graphics::Direct2D::{
-    D2D1CreateFactory, ID2D1Bitmap, ID2D1DCRenderTarget, ID2D1Factory, ID2D1SolidColorBrush,
-    D2D1_ANTIALIAS_MODE_ALIASED, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
+    D2D1CreateFactory, ID2D1Bitmap, ID2D1DCRenderTarget, ID2D1Factory, ID2D1PathGeometry,
+    ID2D1SolidColorBrush, D2D1_ANTIALIAS_MODE_ALIASED, D2D1_BITMAP_INTERPOLATION_MODE_LINEAR,
     D2D1_DRAW_TEXT_OPTIONS_CLIP, D2D1_ELLIPSE, D2D1_FACTORY_TYPE_SINGLE_THREADED,
     D2D1_FEATURE_LEVEL_DEFAULT, D2D1_RENDER_TARGET_PROPERTIES, D2D1_RENDER_TARGET_TYPE,
     D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1_RENDER_TARGET_TYPE_SOFTWARE,
@@ -399,6 +400,36 @@ impl Renderer {
         }
     }
 
+    /// Path geometry for the pin/pushpin glyph (mockup `claudehud-mockup.html` line 252):
+    /// two open, unfilled polylines from a 16-unit SVG viewBox, rendered at 14x14 (scale
+    /// 14/16 = 0.875) centred in `rect` (the 24x24 pin button), i.e. a 5 px margin on each side.
+    unsafe fn pin_icon_geometry(&self, rect: RectF) -> Option<ID2D1PathGeometry> {
+        const SCALE: f32 = 0.875;
+        const INSET: f32 = 5.0;
+        let p = |x: f32, y: f32| pt!(rect.x + INSET + x * SCALE, rect.y + INSET + y * SCALE);
+        let geometry = self.factory.CreatePathGeometry().ok()?;
+        let sink = geometry.Open().ok()?;
+        sink.BeginFigure(p(9.5, 2.5), D2D1_FIGURE_BEGIN_HOLLOW);
+        for (x, y) in [
+            (13.5, 6.5),
+            (11.5, 7.5),
+            (9.0, 10.0),
+            (8.5, 13.0),
+            (6.5, 11.0),
+            (3.0, 14.5),
+        ] {
+            sink.AddLine(p(x, y));
+        }
+        sink.EndFigure(D2D1_FIGURE_END_OPEN);
+        sink.BeginFigure(p(5.5, 9.5), D2D1_FIGURE_BEGIN_HOLLOW);
+        for (x, y) in [(3.5, 7.5), (6.5, 7.0), (9.0, 4.5), (9.5, 2.5)] {
+            sink.AddLine(p(x, y));
+        }
+        sink.EndFigure(D2D1_FIGURE_END_OPEN);
+        sink.Close().ok()?;
+        Some(geometry)
+    }
+
     fn app_icon(&mut self, px: u32) -> Option<ID2D1Bitmap> {
         if let Some((size, bmp)) = &self.icon {
             if *size == px {
@@ -475,16 +506,10 @@ impl Renderer {
                     self.fill_round(*rect, 6.0, 0x24262B, 1.0);
                 }
                 let c = ink_rgb(if *on { Ink::Primary } else { Ink::Muted });
-                let (cx, cy) = (rect.x + rect.w / 2.0, rect.y + rect.h / 2.0);
-                self.line(cx - 4.0, cy + 1.0, cx + 4.0, cy + 1.0, c, 1.4); // crossbar
-                self.line(cx, cy + 1.0, cx, cy + 7.0, c, 1.4); // needle
-                self.set(c, 1.0);
-                let head = D2D1_ELLIPSE {
-                    point: pt!(cx, cy - 3.0),
-                    radiusX: 3.0,
-                    radiusY: 3.0,
-                };
-                self.target.DrawEllipse(&head, &self.brush, 1.4, None);
+                if let Some(geometry) = self.pin_icon_geometry(*rect) {
+                    self.set(c, 1.0);
+                    self.target.DrawGeometry(&geometry, &self.brush, 1.4, None);
+                }
             }
             Op::Chevron { cx, cy, open } => {
                 let c = ink_rgb(Ink::Muted);
