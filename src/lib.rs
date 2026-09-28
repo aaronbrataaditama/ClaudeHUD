@@ -5,9 +5,12 @@
 pub mod collectors;
 pub mod fixture;
 pub mod format;
+pub mod geometry;
+pub mod hover;
 pub mod icon;
 pub mod latch;
 pub mod model;
+pub mod settings;
 pub mod state;
 pub mod timefmt;
 pub mod tooltip;

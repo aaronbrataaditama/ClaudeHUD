@@ -25,7 +25,7 @@
 
 ## Part A: settings
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 `src/settings.rs`, tests only:
 
@@ -61,7 +61,7 @@ mod tests {
 
 Add `pub mod settings;` to `src/lib.rs`.
 
-- [ ] **Step 2: Implement**
+- [x] **Step 2: Implement**
 
 Above the tests:
 
@@ -164,7 +164,7 @@ pub fn settings_path(exe_dir: &Path, appdata: Option<&Path>) -> PathBuf {
 }
 ```
 
-- [ ] **Step 3: IO tests**
+- [x] **Step 3: IO tests**
 
 `tests/settings_io.rs`:
 
@@ -204,14 +204,14 @@ fn path_prefers_exe_dir_and_falls_back_to_appdata() {
 }
 ```
 
-- [ ] **Step 4: Run**
+- [x] **Step 4: Run**
 
 Run: `cargo test --lib settings::` then `cargo test --test settings_io`
 Expected: 3 + 3 passed.
 
 ## Part B: geometry
 
-- [ ] **Step 5: Write failing tests**
+- [x] **Step 5: Write failing tests**
 
 `src/geometry.rs`, tests only:
 
@@ -309,7 +309,7 @@ mod tests {
 
 Add `pub mod geometry;` to `src/lib.rs`.
 
-- [ ] **Step 6: Implement**
+- [x] **Step 6: Implement**
 
 Above the tests:
 
@@ -427,14 +427,14 @@ pub fn slide_offset(edge: Edge, eased: f32, scale: f32) -> (i32, i32) {
 }
 ```
 
-- [ ] **Step 7: Run**
+- [x] **Step 7: Run**
 
 Run: `cargo test --lib geometry::`
 Expected: 8 passed.
 
 ## Part C: hover state machine
 
-- [ ] **Step 8: Write failing tests**
+- [x] **Step 8: Write failing tests**
 
 `src/hover.rs`, tests only:
 
@@ -544,7 +544,7 @@ mod tests {
 
 Add `pub mod hover;` to `src/lib.rs`.
 
-- [ ] **Step 9: Implement**
+- [x] **Step 9: Implement**
 
 Above the tests:
 
@@ -676,7 +676,7 @@ impl Hover {
 }
 ```
 
-- [ ] **Step 10: Run all tests, lint, commit**
+- [x] **Step 10: Run all tests, lint, commit**
 
 Run: `cargo test` (all), `cargo clippy --all-targets -- -D warnings`, `cargo fmt`
 Expected: `hover::` 10 passed; everything else still green.
