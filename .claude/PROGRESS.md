@@ -11,15 +11,14 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 ## Resume here
 
 - **Current task:** Task 17 done — ClaudeHUD now runs on real Claude Code sessions, not just fixtures.
-  Task 18 not started.
-- **Next action:** offer the user the remaining manual QA checks from Task 17 Step 4 (hover tooltip vs.
-  `/usage`, idle dimming, a second session's permission prompt turning it yellow, all-sessions-closed
-  off state, a mid-turn crash turning it red, Wi-Fi-off behavior) as optional — not blocking, since the
-  automated/safe parts are already verified. Then wait for go-ahead to start Task 18 (panel window,
-  Direct2D — sonnet, escalate to opus if stuck; the hardest Win32 task, checked against the mockup).
-- **Branch:** `main` at `e97fee5`.
-- **Waiting on user:** confirmation to proceed to Task 18 (and optionally, to do the manual QA checks
-  together first)
+  Task 18 not started yet.
+- **Next action:** read `docs/plans/claudehud/task-18-panel-window.md`, mark it in progress, dispatch
+  to sonnet (escalate to opus if stuck — this is the hardest Win32 task, the Direct2D panel window
+  checked against the mockup). Separately (not blocking): the 6 deferred manual QA checks from Task 17
+  are written up in `docs/manual-qa-pending.md` — do them with the user whenever convenient, and fold
+  them into Task 20's final `docs/manual-checklist.md`.
+- **Branch:** `main` at `3ba0dc1` (+ the new `docs/manual-qa-pending.md`, committed separately).
+- **Waiting on user:** nothing right now
 - **Known environment quirk:** `cargo test --lib` occasionally hits a transient Windows linker error
   (`LNK1104: cannot open file ...claudehud-*.exe`), seen in both Task 10 and Task 11's runs. An
   immediate retry with no code changes always passes. Likely a stale file handle (antivirus scan or a
