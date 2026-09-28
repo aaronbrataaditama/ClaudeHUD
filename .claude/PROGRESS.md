@@ -16,8 +16,13 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
   whenever convenient: work through `docs/manual-qa-pending.md`'s checklist together (items 1-7 from
   Tasks 17-18, items 9-19 from Task 19; item 8 already resolved) and `docs/manual-checklist.md` (the
   spec §12 release checklist, entirely unticked — needs a human to walk through it).
-- **Branch:** `main` at `5e32648`.
+- **Branch:** `main` at `9be284f`.
 - **Waiting on user:** confirmation to proceed to the final whole-branch review
+- **IMPORTANT — git history was rewritten on 2026-09-28 (see decisions log).** Every commit hash
+  mentioned anywhere in this file *before* that entry is now stale and will not resolve — the whole
+  history was rewritten to scrub personal info before a public push, which changed every commit's
+  hash. Trust `git log --oneline` over any hash written earlier in this document; hashes from that
+  point on (starting with this entry, `9be284f`) are current.
 - **Known environment quirk:** `cargo test --lib` occasionally hits a transient Windows linker error
   (`LNK1104: cannot open file ...claudehud-*.exe`), seen in both Task 10 and Task 11's runs. An
   immediate retry with no code changes always passes. Likely a stale file handle (antivirus scan or a
@@ -212,6 +217,43 @@ Newest last. Record anything a resumed session must know that is not already in 
   location again, it will start with those settings rather than whatever they had before — not
   restored automatically, since there was no prior copy to restore from (it wasn't read before being
   overwritten). Harmless (the tray menu can change it back anytime), but worth knowing.
+
+## Pre-publish privacy cleanup (2026-09-28)
+
+Before pushing this repo to GitHub, the user asked for a full audit of personal/private information.
+Findings and actions:
+
+- **Git commit history showed the user's real name and work email** on every commit (from global git
+  config, no local override). **Fixed**: rewrote all 63 commits' author/committer identity to a
+  generic `ClaudeHUD <claudehud@users.noreply.github.com>` via `git filter-branch --env-filter` (no
+  `git-filter-repo` available; `filter-branch` was fine for this repo's size — 63 commits, one branch,
+  no tags). Removed the `refs/original/` backup ref filter-branch creates, expired the reflog, and ran
+  `git gc --prune=now --aggressive` — verified the old commit objects are actually gone (not just
+  unreferenced) by confirming `git cat-file -p <old-hash>` fails. Safe to do because nothing had been
+  pushed anywhere yet (`git remote -v` was empty the whole time) — no one else had a copy of the old
+  history.
+- **Windows username** (`C:\Users\<name>\...`) appeared in 2 lines of this very file — genericized to
+  `%USERPROFILE%`/`$USERPROFILE`.
+- **A real machine hostname** appeared in `PLAN-CLAUDEHUD.md`, `docs/plans/claudehud/task-04-registry.md`,
+  and the actual compiled `src/collectors/registry.rs` (both the doc comment and a test fixture/fake)
+  — replaced with a generic `dev-machine`/`DEV-MACHINE` placeholder, preserving the original's
+  deliberate case-mismatch (the test exercises case-insensitive domain comparison).
+- **A path to another private project** of the user's was cited in `PLAN-CLAUDEHUD.md` and
+  `task-07-credentials-usage.md` as "what a similar tool reads" — replaced with a generic description.
+- **Two other private project/session names** appeared as example data in `docs/spike-results.md` —
+  replaced with a generic description of what was observed.
+- **Real Anthropic Enterprise billing figures** (the account's actual $ spend) were in
+  `fixtures/usage/live-20260925.json`, used as a real-world regression fixture. Replaced with
+  fabricated numbers of the same shape/percentage; updated the matching assertions in
+  `tests/usage_fixtures.rs` (`live_20260925_is_spend_only_via_the_spend_object`) and the prose in
+  `docs/spike-results.md`/`task-07-credentials-usage.md` that quoted the real figures. Re-ran the full
+  test suite after the fixture change to confirm the updated assertions still pass.
+- Verified with repeated `git grep` sweeps (current tree) and a full `git log -p --all` scan (entire
+  history, for tokens/secrets specifically) before and after each fix. Nothing else found: no leaked
+  OAuth tokens, no other names/emails, no other hostnames.
+- Committed as `9be284f` ("chore: add README, redact personal paths/hostnames before public release"),
+  *then* the history rewrite ran on top of that, so this commit's own hash also changed (see the
+  "IMPORTANT" note in Resume Here above).
 
 ## Blockers
 
