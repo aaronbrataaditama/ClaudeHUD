@@ -10,12 +10,12 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Task 14 done (crop bug found and fixed, both independently verified). Task 15
-  not started.
-- **Next action:** waiting on user go-ahead to start Task 15 (Win32 platform services — sonnet;
-  compile-driven signature fixes, `windows` crate 0.61).
-- **Branch:** `main` at `eda9ba0`.
-- **Waiting on user:** confirmation to proceed to Task 15
+- **Current task:** Task 15 (in progress — dispatched to sonnet sub-agent). Real Win32 FFI: process
+  probe, local time, WinHTTP client, registry/autostart/single-instance/fullscreen helpers, log.
+- **Next action:** review Task 15 sub-agent's work when it finishes, report to user, wait for
+  go-ahead before Task 16 (the first visible milestone).
+- **Branch:** `main` at `9ed1cbb`.
+- **Waiting on user:** nothing right now
 - **Known environment quirk:** `cargo test --lib` occasionally hits a transient Windows linker error
   (`LNK1104: cannot open file ...claudehud-*.exe`), seen in both Task 10 and Task 11's runs. An
   immediate retry with no code changes always passes. Likely a stale file handle (antivirus scan or a
@@ -57,7 +57,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | 12 | Panel layout | sonnet | done | c360f3a | verified independently: 117 lib tests (incl. all 12 panel tests) + all integration tests pass, clippy clean; trivial `#[cfg(test)]`-gated import addition, same pattern as Tasks 10/11 |
 | 13 | Collector + fetch + schedule | sonnet | done | 644814a | verified independently: 143 tests total pass (incl. all 12 collect tests, both flagged-tricky ones), clippy and fmt clean; trivial `#[allow(clippy::type_complexity)]` on a test-fake field, same pattern as prior tasks |
 | 14 | App icon asset | haiku | done | 89ea91d, eda9ba0 (crop fix) | **coordinator independently re-verified after the fix, not just trusting the sub-agent's report**: re-extracted both PNG frames directly from the committed `.ico` and viewed them myself — 256px shows the full tile, creature centered, all 4 orbit spheres, clean corners; 16px shows the correct simplified tile. Also independently re-ran `cargo test` (117+ passing), clippy, and `cargo build --release` (431 KB, under budget) myself. |
-| 15 | Platform services (Win32) | sonnet | todo | | compile-driven signature fixes |
+| 15 | Platform services (Win32) | sonnet | in progress | | dispatched to sonnet sub-agent |
 | 16 | Strip + tray + loop | sonnet | todo | | first visible milestone; user checks the screen |
 | 17 | Live wiring + worker | sonnet | todo | | user checks against real sessions |
 | 18 | Panel window (Direct2D) | sonnet (escalate to opus if stuck) | todo | | hardest Win32 task; user checks against the mockup |
