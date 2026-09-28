@@ -35,7 +35,7 @@ The list viewport is `max_h − list_top − 74`, so the header, usage and foote
 
 ---
 
-- [ ] **Step 1: Module file**
+- [x] **Step 1: Module file**
 
 `src/panel/mod.rs`:
 
@@ -47,7 +47,7 @@ pub mod layout;
 
 Add `pub mod panel;` to `src/lib.rs`.
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Create `src/panel/layout.rs` with only this test module:
 
@@ -291,12 +291,12 @@ mod tests {
 }
 ```
 
-- [ ] **Step 3: Run to verify failure**
+- [x] **Step 3: Run to verify failure**
 
 Run: `cargo test --lib panel::`
 Expected: compile errors.
 
-- [ ] **Step 4: Implement**
+- [x] **Step 4: Implement**
 
 Above the tests in `src/panel/layout.rs`:
 
@@ -919,12 +919,12 @@ fn tooltip_op(c: &Ctx, hits: &[HitRegion]) -> Option<Op> {
 }
 ```
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
 Run: `cargo test --lib panel::`
 Expected: 12 passed. When an assertion about a string fails, the test prints every text op. Compare against §4 and the mockup and fix the layout code, not the expectation, unless the expectation contradicts §4.
 
-- [ ] **Step 6: Lint and commit**
+- [x] **Step 6: Lint and commit**
 
 ```powershell
 cargo clippy --all-targets -- -D warnings

@@ -10,6 +10,7 @@ pub mod hover;
 pub mod icon;
 pub mod latch;
 pub mod model;
+pub mod panel;
 pub mod settings;
 pub mod state;
 pub mod timefmt;
