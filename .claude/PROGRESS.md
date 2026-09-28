@@ -182,22 +182,36 @@ Newest last. Record anything a resumed session must know that is not already in 
 
 ## Post-plan bug fixes (found by the user during manual testing, after all 20 tasks were done)
 
-- 2026-09-28: **Bug 1 — pin icon looks wrong.** `render.rs`'s `Op::Pin` drew a crude circle+crossbar
-  approximation instead of the mockup's actual pushpin SVG (`claudehud-mockup.html` line 252). Root
-  cause: this was a plan-authoring gap in Task 18, not an implementation mistake — the given code never
-  matched the mockup shape. Fix: replace with a proper Direct2D path-geometry drawing of the exact SVG
-  path. Dispatched to a sonnet sub-agent alongside Bug 2.
-- 2026-09-28: **Bug 2 — left-edge strip unusable when adjacent to another monitor.** User's primary
-  monitor sits to the right of a second monitor, so the primary's left edge is fully adjacent to it;
-  `edge_borders_other_monitor()` correctly detected this and set `reveal_suppressed = true`, which is
-  documented, intended behavior (§2.3) — but it made the strip completely unable to hover-reveal on
-  that edge, a common real setup. Investigated with the user: the hover reveal already requires a 250ms
-  dwell (`TrackMouseEvent(TME_HOVER)`), which should already prevent a quick pass between monitors from
-  opening the panel, making the blanket suppression redundant. **Decision (with the user): remove the
-  suppression mechanism entirely** — `edge_borders_other_monitor()`, the `reveal_suppressed` field, its
-  wiring in `app.rs`, and both tests that covered the old behavior, plus the `PLAN-CLAUDEHUD.md` §2.3
-  bullet describing it. This is a deliberate spec change post-completion, not a bug in the original
-  spec's own terms — recorded here so a resumed session knows why that mechanism is gone.
+- 2026-09-28: **Bug 1 — pin icon, fixed and independently verified.** `render.rs`'s `Op::Pin` drew a
+  crude circle+crossbar approximation instead of the mockup's actual pushpin SVG
+  (`claudehud-mockup.html` line 252) — a plan-authoring gap from Task 18, not an implementation
+  mistake. Fixed with real Direct2D path geometry tracing the exact SVG path (two open/hollow
+  polylines). Commit `7af854a`. **Coordinator independently re-verified**: rebuilt, opened the panel
+  against `team_mockup.json`, screenshotted and zoomed into the pin button — confirmed a proper angled
+  pushpin/thumbtack shape with a needle point, not the old circle-and-crossbar.
+- 2026-09-28: **Bug 2 — left-edge monitor-adjacency suppression, removed and independently verified.**
+  User's primary monitor sits to the right of a second monitor, so the primary's left edge is fully
+  adjacent to it; `edge_borders_other_monitor()` correctly detected this and set
+  `reveal_suppressed = true` (documented, intended behavior, §2.3) — but it made the strip completely
+  unable to hover-reveal on that edge, a common real setup. Decided with the user to remove the
+  suppression mechanism entirely, relying on the existing 250ms `TME_HOVER` dwell as sufficient
+  protection against accidental cross-monitor reveals. Fully deleted (not disabled):
+  `edge_borders_other_monitor()`, the `reveal_suppressed` field, its `app.rs` wiring, both tests that
+  covered the old behavior, and the `PLAN-CLAUDEHUD.md` §2.3/§8 references. Commit `7af854a` (same
+  commit as Bug 1). **Coordinator independently re-verified with a real hover, not a synthetic click**:
+  set `edge:"left", monitor:"primary"` in `target\release\claudehud.settings.json`, confirmed via
+  `GetWindowRect` the strip was genuinely at the previously-broken position (x=0, on this machine's
+  primary/left-adjacent edge), moved the real cursor onto it with `SetCursorPos` and waited for
+  Windows' own `TrackMouseEvent`/`WM_MOUSEHOVER` delivery (no synthetic messages posted) — the panel
+  revealed correctly, showing live real session data. This is a deliberate spec change made after the
+  original 20-task plan completed, not a bug in the plan's own terms — recorded here so a resumed
+  session knows why that mechanism is gone.
+- 2026-09-28: **Note for whoever resumes**: verifying Bug 2 required overwriting
+  `target\release\claudehud.settings.json` with `edge:"left", monitor:"primary"` for the test. This file
+  is gitignored and not part of the repo, but if the user runs the exe from this same build output
+  location again, it will start with those settings rather than whatever they had before — not
+  restored automatically, since there was no prior copy to restore from (it wasn't read before being
+  overwritten). Harmless (the tray menu can change it back anytime), but worth knowing.
 
 ## Blockers
 
