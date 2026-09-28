@@ -15,7 +15,7 @@
 
 ---
 
-- [ ] **Step 1: Win32 smoke test**
+- [x] **Step 1: Win32 smoke test**
 
 `tests/smoke.rs`:
 
@@ -98,7 +98,7 @@ fn second_instance_exits_immediately() {
 Run: `cargo test --test smoke -- --ignored --test-threads=1`
 Expected: 2 passed (the default `cargo test` shows them as ignored). Run it from a terminal that has focus. If `FindWindowW` returns `Result<HWND>` in the pinned version the code above already handles it; if it returns a bare `HWND`, drop the `Ok(..)` pattern.
 
-- [ ] **Step 2: Runtime budget script**
+- [x] **Step 2: Runtime budget script**
 
 `scripts/budget.ps1`:
 
@@ -129,7 +129,7 @@ Write-Host "Within budget" -ForegroundColor Green
 Run: `powershell -ExecutionPolicy Bypass -File scripts/budget.ps1` and hover the strip once while it waits (or ask the user to).
 Expected: `Within budget`. If the working set is over 40 MB, check that `Renderer` is created once (not per render) and that `Surface` is reused while its size is unchanged, before questioning the budget.
 
-- [ ] **Step 3: Manual checklist**
+- [x] **Step 3: Manual checklist**
 
 `docs/manual-checklist.md`:
 
@@ -175,7 +175,7 @@ Run from `target\release\claudehud.exe` unless noted. Tick every line before a r
 - [ ] `cargo test --test smoke -- --ignored --test-threads=1` passes.
 ```
 
-- [ ] **Step 4: Final gate**
+- [x] **Step 4: Final gate**
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/check.ps1
@@ -185,7 +185,7 @@ powershell -ExecutionPolicy Bypass -File scripts/budget.ps1
 
 Expected: all pass. Then walk through `docs/manual-checklist.md` with the user and tick what they confirm.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 git add tests/smoke.rs scripts/budget.ps1 docs/manual-checklist.md
