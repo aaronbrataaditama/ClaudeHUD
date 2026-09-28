@@ -84,7 +84,7 @@ open. It never takes focus from whatever you were doing — you can keep typing 
 ## Getting started
 
 ```powershell
-git clone <this repo>
+git clone https://github.com/aaronbrataaditama/ClaudeHUD.git
 cd ClaudeHUD
 cargo build --release
 .\target\release\claudehud.exe
@@ -124,6 +124,10 @@ Feature-complete against the v1 spec and passing its own release checklist. Stil
 project — see [`docs/manual-checklist.md`](docs/manual-checklist.md) and
 [`docs/manual-qa-pending.md`](docs/manual-qa-pending.md) for what's been verified by hand versus
 what's still waiting on a human to click through it.
+
+## License
+
+[MIT](LICENSE) © Aaron Brata Aditama
 
 ---
 

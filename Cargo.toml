@@ -3,6 +3,7 @@ name = "claudehud"
 version = "0.1.0"
 edition = "2021"
 description = "Claude Code status light for the Windows desktop"
+license = "MIT"
 build = "build.rs"
 publish = false
 
