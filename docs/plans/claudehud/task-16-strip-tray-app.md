@@ -22,7 +22,7 @@ Read the README's **Notes for implementers** first (windows 0.61 signatures, `tr
 
 ---
 
-- [ ] **Step 1: Window helpers**
+- [x] **Step 1: Window helpers**
 
 `src/platform/win.rs`:
 
@@ -105,7 +105,7 @@ pub fn small_icon_size() -> u32 {
 }
 ```
 
-- [ ] **Step 2: Layered-window presentation**
+- [x] **Step 2: Layered-window presentation**
 
 `src/platform/layered.rs`:
 
@@ -192,7 +192,7 @@ pub fn move_and_fade(hwnd: HWND, x: i32, y: i32, alpha: u8) -> bool {
 }
 ```
 
-- [ ] **Step 3: Monitor enumeration**
+- [x] **Step 3: Monitor enumeration**
 
 `src/platform/monitors.rs`:
 
@@ -241,7 +241,7 @@ pub fn enumerate() -> Vec<MonitorInfo> {
 }
 ```
 
-- [ ] **Step 4: Tray icon**
+- [x] **Step 4: Tray icon**
 
 `src/platform/tray.rs`:
 
@@ -378,7 +378,7 @@ impl Tray {
 }
 ```
 
-- [ ] **Step 5: The app (Task 16 version)**
+- [x] **Step 5: The app (Task 16 version)**
 
 `src/platform/app.rs`. Task 17 replaces this whole file.
 
@@ -603,7 +603,7 @@ extern "system" fn strip_proc(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM) -> L
 }
 ```
 
-- [ ] **Step 6: Wire modules and `main`**
+- [x] **Step 6: Wire modules and `main`**
 
 `src/platform/mod.rs`, full content:
 
@@ -638,7 +638,7 @@ fn main() {
 Run: `cargo build --release` and fix any signature-level compile errors (see README notes).
 Expected: builds with no warnings.
 
-- [ ] **Step 7: Screenshot helper for verification**
+- [x] **Step 7: Screenshot helper for verification**
 
 `scripts/screenshot.ps1`:
 
@@ -667,7 +667,7 @@ $bmp.Save($Out)
 "saved $Out ($r)"
 ```
 
-- [ ] **Step 8: Verify visually**
+- [x] **Step 8: Verify visually**
 
 ```powershell
 cargo build --release
@@ -688,7 +688,7 @@ Also check:
 - Right-click the tray icon → Exit. The strip and the tray icon both disappear.
 - Clear the fixture (`Remove-Item Env:CLAUDEHUD_FIXTURE`) and start again. There is no strip (off) and the tray shows the grey creature with no badge. Exit.
 
-- [ ] **Step 9: Lint and commit**
+- [x] **Step 9: Lint and commit**
 
 ```powershell
 cargo clippy --all-targets -- -D warnings
