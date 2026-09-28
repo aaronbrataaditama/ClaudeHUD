@@ -144,6 +144,19 @@ machine is mixed-DPI (~164% laptop beside a 100% external). Exclusive-fullscreen
 `SHQueryUserNotificationState` and the strip is hidden. On resume (`WM_POWERBROADCAST`) and unlock
 (`WM_WTSSESSION_CHANGE`) everything is refreshed and repositioned; while locked, the panel is suppressed.
 
+**Known limitation, found during Task 18's manual verification and confirmed with a controlled test:**
+when a window using Windows 11's newer immersive title bar (Snap Layout hover — Claude Desktop, VS
+Code, Windows Terminal and similar Electron/WinUI3 apps) is maximized on the same monitor as the top
+edge, the OS's own `TITLE_BAR_SCAFFOLDING_WINDOW_CLASS` hit-test overlay claims mouse input across the
+entire top edge, ahead of even `WS_EX_TOPMOST` windows (verified with `WindowFromPoint` returning that
+class instead of the strip's at every point along the strip's span). The strip still renders on top and
+looks clickable, but real mouse hover/clicks may not reach it while such an app is maximized there. A
+plain classic-chrome maximized window (tested with a bare WinForms window) does **not** cause this — the
+scaffolding is specific to the newer immersive title bar, not a property of maximized windows in
+general. No code-level fix is planned for v1: this is an OS shell behaviour outside what a topmost
+window can override, and the tray icon remains a fully working fallback for status and access
+regardless. Documented here rather than fixed; revisit if it proves disruptive in daily use.
+
 ## 3. Data sources
 
 All reads. ClaudeHUD never writes to anything under `~/.claude`.

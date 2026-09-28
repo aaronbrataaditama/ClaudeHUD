@@ -138,10 +138,15 @@ Newest last. Record anything a resumed session must know that is not already in 
   strip through normal input while any window is maximized on that monitor, even though the strip still
   *draws* on top and looks clickable. Worked around it for verification purposes only by posting
   `WM_LBUTTONUP` straight to the strip's `HWND`; that is a test technique, not a fix — **the underlying
-  reachability problem is unresolved in the shipped app**. This may need a real mitigation (a taller hit
-  area, an edge inset, or accepting it as a known limitation) — flag for the final whole-branch review
-  and/or Task 19's system-integration pass; not blocking Task 18 itself, since the panel's rendering,
-  layout and hover *logic* are all independently verified correct once a click reaches the window.
+  reachability problem is unresolved in the shipped app**. Not blocking Task 18 itself, since the
+  panel's rendering, layout and hover *logic* are all independently verified correct once a click
+  reaches the window.
+- 2026-09-28: **Resolved** (with the user): confirmed via a controlled test (a plain maximized WinForms
+  window shows no interference at all) that the scaffolding overlay is specific to apps using Windows
+  11's newer immersive title bar, not a property of maximized windows generally. Decision: document as
+  a known OS-level limitation (now in `PLAN-CLAUDEHUD.md` §2.4) rather than attempt a code fix — no
+  topmost window can override shell-privileged hit-testing, and the tray icon is a working fallback.
+  `docs/manual-qa-pending.md` item 8 marked done.
 - 2026-09-28: **Task 14's icon crop was wrong, and the implementer's own visual check missed it.**
   `scripts/make-icon.ps1`'s crop rectangle `(590, 135, 820, 820)` (copied verbatim from the task file)
   assumes a 2000px-wide source image, but the actual `assets/ClaudeHUD_icon.jpg` is **2816×1536**. The

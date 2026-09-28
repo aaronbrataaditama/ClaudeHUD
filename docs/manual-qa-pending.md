@@ -54,19 +54,13 @@ starts it, so it doesn't hold the single-instance mutex for later runs.
 
 ## From Task 18 verification: Windows 11 top-edge hit-testing
 
-- [ ] **8. Investigate the maximized-window hit-test quirk together.** Confirmed during Task 18's
-  review: when any window is maximized on the same monitor, Windows 11's Snap Layout hit-testing
-  overlay (`TITLE_BAR_SCAFFOLDING_WINDOW_CLASS`) claims mouse input across the entire top edge of the
-  screen, ahead of even `WS_EX_TOPMOST` windows — confirmed with `WindowFromPoint` returning that class
-  instead of `ClaudeHUDStrip` at every point tested along the strip's span. The strip still draws on
-  top and looks clickable, but a real mouse may not reach it while something is maximized. Worth
-  checking together: (a) does this happen with *every* maximized window, or only ones with a custom
-  Chromium/Electron-style title bar requesting full-width Snap Layout hover (the window that triggered
-  it was titled "PLAN-SIDELIGHT desktop application", possibly Electron-based)? (b) does it also block
-  genuine mouse hover (not just a simulated click), i.e. does `StripHover` ever fire while a window is
-  maximized? (c) if it's a real, common-case problem, what's the right fix — a documented limitation,
-  an inset/taller hit region, or something else? This should be resolved (or at least a decision made)
-  before the final whole-branch review.
+- [x] **8. Maximized-window hit-test quirk — investigated and resolved as a documented limitation.**
+  Confirmed the scaffolding overlay (`TITLE_BAR_SCAFFOLDING_WINDOW_CLASS`) is specific to apps using
+  Windows 11's newer immersive title bar (Claude Desktop, VS Code, Windows Terminal, etc.), not a
+  property of maximized windows in general — a plain WinForms maximized test window showed no
+  interference at all. Decision (2026-09-28, with the user): document as a known OS-level limitation
+  in `PLAN-CLAUDEHUD.md` §2.4 rather than attempt a code fix; the tray icon remains a working fallback.
+  No further action needed unless it proves disruptive in daily use.
 
 ## From Task 19 (menu, settings, system events) — this task's own Step 3 is written as "ask the user"
 for every item; none of it was automated by the implementer. Do these together:
