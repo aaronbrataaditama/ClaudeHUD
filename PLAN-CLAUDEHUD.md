@@ -50,7 +50,8 @@ Rules:
 - **Off wins over quota.** With no live session, quota amber/red and status-page red do not light the
   strip; the tray icon and panel still show them.
 - **Crash red latches** and is the one exception to "off wins": a session that dies mid-turn keeps the
-  strip red until the panel is opened (the acknowledgement) or the tray is clicked.
+  strip red until the panel that shows it closes again (the acknowledgement), so the crash row stays
+  readable while the panel is open.
 - **The strip never animates.** Busy vs idle is a brightness step. The only motion anywhere is the panel
   sliding in and out, and that happens only when you hover.
 - **No time-based colour.** A 14-minute turn is green, never red. `statusUpdatedAt` is a transition
@@ -212,9 +213,10 @@ and `c--…` exist on this machine). Drop a torn final line.
 
 Scanned only while the panel is visible, or when a live session's transcript changes.
 
-- One row per agent file active in the current turn. **Running** = its parent `Agent`/`Task` call has
-  no `tool_result` yet; otherwise **done** (kept on screen until the parent session's next turn) or
-  **failed** if the result is an error.
+- Listed if the agent's transcript changed in the last 15 min. **Done** when its last assistant line has
+  `stop_reason: "end_turn"`; **failed** on an exhausted `api_error`; otherwise **running** if written in
+  the last 10 min, else **stopped**. (Background agents return a `tool_result` immediately, so the
+  parent transcript cannot tell whether they are running.)
 - Per-agent fields: type (`subagent_type`, e.g. `Explore`, `general-purpose`), description, elapsed
   time (first line timestamp → last line or now), model, tokens (sum of `usage` over its assistant
   lines), and tool-call count.
@@ -308,8 +310,8 @@ Top to bottom:
 
 States with dedicated copy: **empty** ("No Claude sessions running" plus the usage block and footer),
 **limit reached** (header "Weekly limit spent — new turns will fail until Mon 09:00"),
-**token expired**, and **first run** (panel opens pinned once with a note that the tray menu holds
-settings).
+**token expired**, and **first run** (a one-time tray balloon: hover the light for details, right-click
+the icon for settings).
 
 ## 5. Tray
 

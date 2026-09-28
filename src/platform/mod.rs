@@ -4,6 +4,7 @@ pub mod app;
 pub mod http;
 pub mod layered;
 pub mod localtime;
+pub mod menu;
 pub mod monitors;
 pub mod process;
 pub mod render;

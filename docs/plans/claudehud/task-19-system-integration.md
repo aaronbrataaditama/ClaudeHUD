@@ -17,7 +17,7 @@
 
 ---
 
-- [ ] **Step 1: Menu**
+- [x] **Step 1: Menu**
 
 `src/platform/menu.rs`:
 
@@ -135,7 +135,7 @@ pub fn popup(owner: HWND, st: &MenuState) -> u32 {
 
 Add `pub mod menu;` to `src/platform/mod.rs`.
 
-- [ ] **Step 2: Replace `src/platform/app.rs` (final)**
+- [x] **Step 2: Replace `src/platform/app.rs` (final)**
 
 New compared with Task 18:
 - fields `settings_path`, `locked`, `fullscreen`
@@ -819,7 +819,12 @@ extern "system" fn panel_proc(hwnd: HWND, msg: u32, wp: WPARAM, lp: LPARAM) -> L
 }
 ```
 
-- [ ] **Step 3: Build and verify**
+- [ ] **Step 3: Build and verify** — intentionally not performed here. All 12 manual checks below are
+  deliberately deferred and tracked in `docs/manual-qa-pending.md` (items 9-19), to be worked through
+  with the real human user (several are unsafe for an unattended agent: lock screen, sleep, fullscreen,
+  taskbar/display-scaling changes, explorer restart, and the autostart popup-menu check). Only the
+  automated build/clippy/fmt/test steps and a minimal first-run-settings check were done as a substitute
+  (see the task's run report / commit for details); none of the 12 sub-items below are ticked.
 
 ```powershell
 cargo build --release
@@ -843,14 +848,14 @@ Ask the user to confirm:
 11. **Taskbar:** move the taskbar to the left or top of the screen (or change display scaling). The strip re-centres on the work area.
 12. **Explorer restart:** restart `explorer.exe` from Task Manager. The tray icon comes back.
 
-- [ ] **Step 4: Record the deviations in the spec**
+- [x] **Step 4: Record the deviations in the spec**
 
 In `PLAN-CLAUDEHUD.md`:
 - §1, the rule starting "**Crash red latches**": replace "until the panel is opened (the acknowledgement) or the tray is clicked" with "until the panel that shows it closes again (the acknowledgement), so the crash row stays readable while the panel is open".
 - §3.3: replace the paragraph starting "One row per agent file active in the current turn" with: "Listed if the agent's transcript changed in the last 15 min. **Done** when its last assistant line has `stop_reason: \"end_turn\"`; **failed** on an exhausted `api_error`; otherwise **running** if written in the last 10 min, else **stopped**. (Background agents return a `tool_result` immediately, so the parent transcript cannot tell whether they are running.)"
 - §4 "States with dedicated copy": replace "**first run** (panel opens pinned once with a note that the tray menu holds settings)" with "**first run** (a one-time tray balloon: hover the light for details, right-click the icon for settings)".
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 cargo fmt
