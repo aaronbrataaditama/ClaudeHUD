@@ -24,7 +24,7 @@
 
 ---
 
-- [ ] **Step 1: Write the failing integration tests**
+- [x] **Step 1: Write the failing integration tests**
 
 `tests/collect.rs`:
 
@@ -285,12 +285,12 @@ fn schedule_does_not_storm_on_expiry_or_network_errors() {
 
 Add `pub mod collect;` to `src/lib.rs` and create an empty `src/collect.rs`.
 
-- [ ] **Step 2: Run to verify failure**
+- [x] **Step 2: Run to verify failure**
 
 Run: `cargo test --test collect`
 Expected: compile errors (nothing defined in `collect`).
 
-- [ ] **Step 3: Implement `src/collect.rs`**
+- [x] **Step 3: Implement `src/collect.rs`**
 
 ```rust
 //! Glue between the collectors and the UI. The UI thread owns one `Collector`
@@ -640,7 +640,7 @@ impl Collector {
 }
 ```
 
-- [ ] **Step 4: Run tests**
+- [x] **Step 4: Run tests**
 
 Run: `cargo test --test collect`
 Expected: 12 passed.
@@ -649,7 +649,7 @@ Two tests are easy to get subtly wrong:
 - `crash_mid_turn_latches_until_acknowledged`: the dead file is still on disk, so every later tick reports it as `dead`. The latch must not re-latch it after `acknowledge()` (Task 9 removes it from `seen_alive`).
 - `torn_registry_file_reuses_last_good_entry`: the streak resets when the file parses again.
 
-- [ ] **Step 5: Full suite, lint, commit**
+- [x] **Step 5: Full suite, lint, commit**
 
 ```powershell
 cargo test
