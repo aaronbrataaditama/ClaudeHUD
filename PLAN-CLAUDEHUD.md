@@ -327,16 +327,19 @@ the icon for settings).
   Mockup: `claudehud-mockup.html` §5.
 - Left-click toggles the pinned panel (and acknowledges a latched red).
 - Right-click: a native `TrackPopupMenu` menu, so it looks and behaves exactly like Windows'. Items:
-  1. **Show panel** / **Hide panel**: the default item (bold, `SetMenuDefaultItem`), same as left-click
+  1. **ClaudeHUD v`<CARGO_PKG_VERSION>`**: disabled label, not a command — added post-v1 so the
+     running build's version is visible without a separate About dialog
   2. separator
-  3. Edge ▸ Top / Left (radio)
-  4. Monitor ▸ Primary display / one item per monitor by friendly name (radio)
-  5. Warn at ▸ 80% / 85% / 90% (radio); the current value is shown beside the item
-  6. separator
-  7. Run on startup (check)
-  8. Open status page (opens `https://status.claude.com`)
-  9. separator
-  10. Exit
+  3. **Show panel** / **Hide panel**: the default item (bold, `SetMenuDefaultItem`), same as left-click
+  4. separator
+  5. Edge ▸ Top / Left (radio)
+  6. Monitor ▸ Primary display / one item per monitor by friendly name (radio)
+  7. Warn at ▸ 80% / 85% / 90% (radio); the current value is shown beside the item
+  8. separator
+  9. Run on startup (check)
+  10. Open status page (opens `https://status.claude.com`)
+  11. separator
+  12. Exit
 - Changes apply immediately and are saved to settings.
 - Dark menu: call `SetPreferredAppMode(AllowDark)` (uxtheme ordinal 135) at startup so the menu follows
   the system dark theme. It is undocumented, so if the call is unavailable the menu is simply light.

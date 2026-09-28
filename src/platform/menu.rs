@@ -8,9 +8,12 @@ use windows::Win32::Foundation::{HWND, LPARAM, POINT, WPARAM};
 use windows::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CheckMenuRadioItem, CreatePopupMenu, DestroyMenu, GetCursorPos, PostMessageW,
     SetForegroundWindow, SetMenuDefaultItem, TrackPopupMenu, HMENU, MENU_ITEM_FLAGS, MF_BYCOMMAND,
-    MF_CHECKED, MF_POPUP, MF_SEPARATOR, MF_STRING, MF_UNCHECKED, TPM_NONOTIFY, TPM_RETURNCMD,
-    TPM_RIGHTBUTTON, WM_NULL,
+    MF_CHECKED, MF_DISABLED, MF_GRAYED, MF_POPUP, MF_SEPARATOR, MF_STRING, MF_UNCHECKED,
+    TPM_NONOTIFY, TPM_RETURNCMD, TPM_RIGHTBUTTON, WM_NULL,
 };
+
+/// The running build's version, shown as a disabled label at the top of the tray menu.
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub const CMD_TOGGLE: u32 = 100;
 pub const CMD_EDGE_TOP: u32 = 110;
@@ -47,6 +50,13 @@ pub fn popup(owner: HWND, st: &MenuState) -> u32 {
         let Ok(menu) = CreatePopupMenu() else {
             return 0;
         };
+        item(
+            menu,
+            MF_STRING | MF_GRAYED | MF_DISABLED,
+            0,
+            &format!("ClaudeHUD v{VERSION}"),
+        );
+        item(menu, MF_SEPARATOR, 0, "");
         item(
             menu,
             MF_STRING,
