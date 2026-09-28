@@ -10,13 +10,12 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Task 14 **reopened** — independent review found the icon crop is wrong (see Tasks
-  table and decisions log). Fixing now.
-- **Next action:** dispatch a fix-it sub-agent to correct the crop rectangle in
-  `scripts/make-icon.ps1`, regenerate `assets/claudehud.ico`, and commit. Then re-verify visually
-  myself again before marking Task 14 done and reporting to the user.
-- **Branch:** `main` at `89ea91d` (bad icon crop still committed here; fix is a new commit on top).
-- **Waiting on user:** nothing right now
+- **Current task:** Task 14 done (crop bug found and fixed, both independently verified). Task 15
+  not started.
+- **Next action:** waiting on user go-ahead to start Task 15 (Win32 platform services — sonnet;
+  compile-driven signature fixes, `windows` crate 0.61).
+- **Branch:** `main` at `eda9ba0`.
+- **Waiting on user:** confirmation to proceed to Task 15
 - **Known environment quirk:** `cargo test --lib` occasionally hits a transient Windows linker error
   (`LNK1104: cannot open file ...claudehud-*.exe`), seen in both Task 10 and Task 11's runs. An
   immediate retry with no code changes always passes. Likely a stale file handle (antivirus scan or a
@@ -57,7 +56,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | 11 | Settings, geometry, hover | haiku | done | 407a6ae | verified independently: 105 lib tests + all integration tests pass, clippy and fmt clean; no code deviations (only cargo fmt line-wrapping) |
 | 12 | Panel layout | sonnet | done | c360f3a | verified independently: 117 lib tests (incl. all 12 panel tests) + all integration tests pass, clippy clean; trivial `#[cfg(test)]`-gated import addition, same pattern as Tasks 10/11 |
 | 13 | Collector + fetch + schedule | sonnet | done | 644814a | verified independently: 143 tests total pass (incl. all 12 collect tests, both flagged-tricky ones), clippy and fmt clean; trivial `#[allow(clippy::type_complexity)]` on a test-fake field, same pattern as prior tasks |
-| 14 | App icon asset | haiku | **reopened** | 89ea91d (bad crop) | sub-agent's own visual check was wrong — see decisions log. Fix in progress. |
+| 14 | App icon asset | haiku | done | 89ea91d, eda9ba0 (crop fix) | **coordinator independently re-verified after the fix, not just trusting the sub-agent's report**: re-extracted both PNG frames directly from the committed `.ico` and viewed them myself — 256px shows the full tile, creature centered, all 4 orbit spheres, clean corners; 16px shows the correct simplified tile. Also independently re-ran `cargo test` (117+ passing), clippy, and `cargo build --release` (431 KB, under budget) myself. |
 | 15 | Platform services (Win32) | sonnet | todo | | compile-driven signature fixes |
 | 16 | Strip + tray + loop | sonnet | todo | | first visible milestone; user checks the screen |
 | 17 | Live wiring + worker | sonnet | todo | | user checks against real sessions |
