@@ -10,11 +10,9 @@ with the task's commit. Anyone resuming, human or model, reads this file first.
 
 ## Resume here
 
-- **Current task:** Task 14 (in progress — dispatched to haiku sub-agent). Note: the plan allowed this
-  to run alongside Tasks 3-13, but since those are all done sequentially now, it's just run normally.
-- **Next action:** review Task 14 sub-agent's work when it finishes (including viewing the generated
-  icon frames myself), report to user, wait for go-ahead before Task 15.
-- **Branch:** `main` at `aceeae3`.
+- **Current task:** Task 14 (done). Icon generated and embedded; exe icon verified correct.
+- **Next action:** wait for user go-ahead before Task 15 (Platform services, Win32).
+- **Branch:** `main` at `89ea91d`.
 - **Waiting on user:** nothing right now
 - **Known environment quirk:** `cargo test --lib` occasionally hits a transient Windows linker error
   (`LNK1104: cannot open file ...claudehud-*.exe`), seen in both Task 10 and Task 11's runs. An
@@ -56,7 +54,7 @@ Status: `todo` · `in progress` · `review` · `done` · `blocked`
 | 11 | Settings, geometry, hover | haiku | done | 407a6ae | verified independently: 105 lib tests + all integration tests pass, clippy and fmt clean; no code deviations (only cargo fmt line-wrapping) |
 | 12 | Panel layout | sonnet | done | c360f3a | verified independently: 117 lib tests (incl. all 12 panel tests) + all integration tests pass, clippy clean; trivial `#[cfg(test)]`-gated import addition, same pattern as Tasks 10/11 |
 | 13 | Collector + fetch + schedule | sonnet | done | 644814a | verified independently: 143 tests total pass (incl. all 12 collect tests, both flagged-tricky ones), clippy and fmt clean; trivial `#[allow(clippy::type_complexity)]` on a test-fake field, same pattern as prior tasks |
-| 14 | App icon asset | haiku | in progress | | dispatched to haiku sub-agent |
+| 14 | App icon asset | haiku | done | 89ea91d | verified independently: icon generator succeeds (187KB, 8 frames), 256px shows orbits/creature with rounded corners/no fringe, 16px shows gradient tile with creature/eyes, exe icon correct, 117 lib tests pass, release exe 388KB under budget |
 | 15 | Platform services (Win32) | sonnet | todo | | compile-driven signature fixes |
 | 16 | Strip + tray + loop | sonnet | todo | | first visible milestone; user checks the screen |
 | 17 | Live wiring + worker | sonnet | todo | | user checks against real sessions |
